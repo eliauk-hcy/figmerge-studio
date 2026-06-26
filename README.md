@@ -1,5 +1,7 @@
 # Paper Figure Layout Tool
 
+Online usage: https://eliauk-hcy.github.io/figmerge-studio/
+
 A browser-based tool for arranging scientific paper figure panels.
 
 It is designed for biomedical and bioinformatics figures such as volcano plots, heatmaps, KM curves, WGCNA panels, single-cell UMAPs, qPCR/WB/IHC validation figures, graphical abstracts, and supplementary figures.
