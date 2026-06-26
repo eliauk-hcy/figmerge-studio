@@ -1,0 +1,1633 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>论文图片排版工具 | Bio Figure Assembler</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #64748b;
+      --line: #d9e0ea;
+      --accent: #146c94;
+      --accent-2: #0f766e;
+      --code: #101828;
+      --soft: #eaf4f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 28px;
+      align-items: center;
+      min-height: 360px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 42px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .lead {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: #134e4a;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .figure-preview {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    }
+
+    .grid-preview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .mini-panel {
+      position: relative;
+      min-height: 116px;
+      border: 1px solid #b9c7d6;
+      background: #fdfefe;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mini-panel strong {
+      position: absolute;
+      top: 8px;
+      left: 9px;
+      font-size: 20px;
+      color: #111827;
+      line-height: 1;
+      background: #fff;
+      padding: 1px 5px;
+    }
+
+    main .wrap {
+      display: grid;
+      gap: 22px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .dropzone {
+      border: 2px dashed #9eb4c7;
+      border-radius: 8px;
+      background: #f8fbfc;
+      padding: 26px;
+      text-align: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--accent);
+      background: #eaf4f6;
+    }
+
+    .dropzone strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+
+    .dropzone p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .file-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+    }
+
+    .file-row img {
+      width: 42px;
+      height: 42px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fff;
+    }
+
+    .file-meta {
+      min-width: 0;
+    }
+
+    .file-name {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .file-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      min-width: 30px;
+      padding: 6px 8px;
+      border-radius: 5px;
+      background: #eef2f7;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    .preview-box {
+      display: grid;
+      gap: 12px;
+    }
+
+    .canvas-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef2f7;
+      padding: 12px;
+      min-height: 360px;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas.dragging-canvas {
+      cursor: grabbing;
+    }
+
+    .manual-hint {
+      border: 1px solid #c8d9e5;
+      background: #f5fbfd;
+      border-radius: 8px;
+      padding: 12px;
+      color: #425466;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 18px;
+    }
+
+    .scenario-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .scenario-figure {
+      display: grid;
+      gap: 8px;
+      min-height: 260px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .scenario-figure.two-by-two {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .scenario-figure.two-by-three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .scenario-figure.three-by-three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .scenario-figure.mixed {
+      grid-template-columns: 1.25fr 1fr;
+      grid-template-rows: repeat(2, 1fr);
+    }
+
+    .scenario-figure.mixed .wide {
+      grid-row: span 2;
+    }
+
+    .paper-panel {
+      position: relative;
+      min-height: 96px;
+      border: 1px solid #b9c7d6;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .paper-panel::before {
+      content: attr(data-label);
+      position: absolute;
+      top: 7px;
+      left: 8px;
+      z-index: 2;
+      font-weight: 800;
+      font-size: 19px;
+      line-height: 1;
+      color: #111827;
+    }
+
+    .plot-title {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 8px;
+      color: #475569;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .bars {
+      position: absolute;
+      left: 20%;
+      right: 14%;
+      bottom: 28%;
+      height: 46%;
+      display: flex;
+      align-items: end;
+      gap: 10%;
+      border-left: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+      padding-left: 8%;
+    }
+
+    .bars span {
+      width: 18%;
+      background: #468faf;
+    }
+
+    .bars span:nth-child(2) {
+      height: 70%;
+      background: #ef476f;
+    }
+
+    .bars span:nth-child(3) {
+      height: 48%;
+      background: #0f766e;
+    }
+
+    .heatmap {
+      position: absolute;
+      inset: 28px 18px 28px;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 2px;
+    }
+
+    .heatmap span:nth-child(3n) { background: #ef476f; }
+    .heatmap span:nth-child(3n + 1) { background: #ffd166; }
+    .heatmap span:nth-child(3n + 2) { background: #118ab2; }
+
+    .volcano {
+      position: absolute;
+      inset: 30px 20px 30px;
+      border-left: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+    }
+
+    .volcano i {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .curve {
+      position: absolute;
+      inset: 32px 18px 34px;
+      border-left: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+    }
+
+    .curve::before,
+    .curve::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 6%;
+      height: 42%;
+      border-top: 4px solid #ef476f;
+      border-right: 4px solid #ef476f;
+      transform: skewX(-20deg);
+    }
+
+    .curve::after {
+      top: 34%;
+      border-color: #118ab2;
+    }
+
+    .network {
+      position: absolute;
+      inset: 26px;
+      background:
+        radial-gradient(circle at 20% 40%, #ef476f 0 6px, transparent 7px),
+        radial-gradient(circle at 48% 25%, #118ab2 0 7px, transparent 8px),
+        radial-gradient(circle at 70% 55%, #0f766e 0 6px, transparent 7px),
+        radial-gradient(circle at 40% 70%, #ffd166 0 6px, transparent 7px);
+    }
+
+    .network::before {
+      content: "";
+      position: absolute;
+      inset: 18px 26px;
+      border-top: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+      transform: rotate(-12deg);
+    }
+
+    .umap {
+      position: absolute;
+      inset: 28px 18px 28px;
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(239, 71, 111, 0.8) 0 18%, transparent 19%),
+        radial-gradient(ellipse at 58% 35%, rgba(17, 138, 178, 0.8) 0 18%, transparent 19%),
+        radial-gradient(ellipse at 50% 68%, rgba(15, 118, 110, 0.8) 0 18%, transparent 19%);
+    }
+
+    .blot {
+      position: absolute;
+      inset: 30px 22px 30px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .blot span {
+      display: block;
+      height: 12px;
+      border-radius: 999px;
+      background: #111827;
+      opacity: 0.82;
+    }
+
+    .microscope {
+      position: absolute;
+      inset: 26px;
+      background:
+        radial-gradient(circle at 30% 35%, rgba(239, 71, 111, 0.9) 0 4px, transparent 5px),
+        radial-gradient(circle at 60% 50%, rgba(17, 138, 178, 0.9) 0 4px, transparent 5px),
+        radial-gradient(circle at 44% 70%, rgba(15, 118, 110, 0.9) 0 4px, transparent 5px),
+        repeating-linear-gradient(45deg, #e2e8f0 0 8px, #f8fafc 8px 16px);
+    }
+
+    .scenario-body {
+      padding: 16px;
+    }
+
+    .scenario-body ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hidden-controls {
+      display: none;
+    }
+
+    .item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .item p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+
+    .command {
+      background: var(--code);
+      color: #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0 0;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: var(--accent-2);
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .button-like {
+      display: inline-block;
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf3f7;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      background: #eef2f7;
+      border-radius: 4px;
+      padding: 2px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.95em;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      counter-reset: step;
+    }
+
+    .step {
+      border-left: 4px solid var(--accent);
+      background: #f8fbfc;
+      padding: 14px;
+      border-radius: 6px;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 880px) {
+      .hero,
+      .cards,
+      .steps,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        padding: 22px 16px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <h1>论文图片排版工具</h1>
+        <p class="lead">把火山图、热图、箱线图、KM 曲线等已有图片合并成 Figure 1A-D / A-F / A-I。支持多图网格和自由拖拽，拖动时会出现参考线帮助对齐。</p>
+        <div class="badge-row">
+          <span class="badge">任意数量图片</span>
+          <span class="badge">拖动参考线</span>
+          <span class="badge">自动 ABCD 标签</span>
+          <span class="badge">支持 TIFF 600 DPI</span>
+          <span class="badge">不拉伸图片</span>
+        </div>
+      </div>
+
+      <div class="figure-preview" aria-label="论文组图示意">
+        <div class="grid-preview">
+          <div class="mini-panel"><strong>A</strong>Volcano plot</div>
+          <div class="mini-panel"><strong>B</strong>Heatmap</div>
+          <div class="mini-panel"><strong>C</strong>Boxplot</div>
+          <div class="mini-panel"><strong>D</strong>KM curve</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="section">
+        <h2>直接拖入图片生成组图</h2>
+        <p>支持把图片拖进页面，或从电脑选择图片。可以一键生成 2×2、2×3、3×3、4×4、5×5 等网格，也可以切换到自由拖拽模式，手动移动每张图片的位置和大小；拖动时会自动吸附到参考线。</p>
+
+        <div class="workspace">
+          <div>
+            <div id="dropzone" class="dropzone">
+              <strong>拖入图片到这里</strong>
+              <p>网页端建议 PNG、JPG、JPEG、WEBP。按导入顺序自动标 A/B/C/D。</p>
+              <label id="pickBtn" class="button-like" for="filePicker">从电脑选择图片</label>
+              <input id="filePicker" type="file" accept="image/png,image/jpeg,image/webp,image/tiff" multiple>
+            </div>
+
+            <div class="actions">
+              <button id="renderBtn" type="button">生成预览</button>
+              <button id="downloadPngBtn" class="secondary" type="button">保存/下载 PNG</button>
+              <button id="chooseOutputFolderBtn" type="button">选择输出文件夹</button>
+              <button id="clearFilesBtn" type="button">清空图片</button>
+            </div>
+            <p id="outputFolderStatus" class="note">输出位置：未选择文件夹，默认使用浏览器下载。</p>
+            <p id="importStatus" class="note">导入状态：等待选择图片。</p>
+
+            <div id="fileList" class="file-list" aria-live="polite"></div>
+          </div>
+
+          <div class="preview-box">
+            <div class="form-grid">
+              <label>
+                排版模式
+                <select id="arrangeMode">
+                  <option value="grid" selected>自动网格</option>
+                  <option value="manual">自由拖拽</option>
+                </select>
+              </label>
+              <label>
+                浏览器输出宽度
+                <input id="canvasWidth" type="number" min="800" step="100" value="2400">
+              </label>
+              <label>
+                浏览器输出高度
+                <input id="canvasHeight" type="number" min="600" step="100" value="1800">
+              </label>
+              <label>
+                预览布局
+                <select id="previewLayout">
+                  <option value="">自动</option>
+                  <option value="1x2">1x2</option>
+                  <option value="1x3">1x3</option>
+                  <option value="1x4">1x4</option>
+                  <option value="2x2" selected>2x2</option>
+                  <option value="2x3">2x3</option>
+                  <option value="3x2">3x2</option>
+                  <option value="3x3">3x3</option>
+                  <option value="3x4">3x4</option>
+                  <option value="4x3">4x3</option>
+                  <option value="4x4">4x4</option>
+                  <option value="4x5">4x5</option>
+                  <option value="5x4">5x4</option>
+                  <option value="5x5">5x5</option>
+                </select>
+              </label>
+              <label>
+                标签位置
+                <select id="previewLabelPosition">
+                  <option value="topleft" selected>左上</option>
+                  <option value="topright">右上</option>
+                  <option value="bottomleft">左下</option>
+                  <option value="bottomright">右下</option>
+                </select>
+              </label>
+              <label>
+                标签字号
+                <input id="previewLabelSize" type="number" min="12" value="64">
+              </label>
+              <label>
+                图间距
+                <input id="gap" type="number" min="0" value="32">
+              </label>
+            </div>
+
+            <div class="actions">
+              <button id="resetLayoutBtn" type="button">重置为网格</button>
+              <button id="bringForwardBtn" type="button">上移一层</button>
+              <button id="sendBackwardBtn" type="button">下移一层</button>
+              <button id="scaleUpBtn" class="secondary" type="button">放大选中图</button>
+              <button id="scaleDownBtn" class="secondary" type="button">缩小选中图</button>
+            </div>
+
+            <div class="canvas-wrap">
+              <canvas id="figureCanvas" width="1200" height="800"></canvas>
+            </div>
+            <p class="manual-hint">自由拖拽模式：点击图片选中后可直接拖动；靠近画布边缘、中心线或其他图片边缘时会显示蓝色参考线并自动吸附。用“放大/缩小选中图”调整大小，用“上移/下移一层”调整遮挡顺序。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>常用场景</h2>
+        <p>下面是论文里最常见的组图类型。可以先参考这些结构决定画布比例和大致排版，再把自己的图片拖进上方画布微调。</p>
+
+        <div class="scenario-grid">
+          <div class="scenario-card">
+            <div class="scenario-figure two-by-two">
+              <div class="paper-panel" data-label="A"><div class="bars"><span style="height:58%"></span><span></span><span></span></div><span class="plot-title">Data workflow / PCA</span></div>
+              <div class="paper-panel" data-label="B"><div class="volcano"><i style="left:18%;top:58%"></i><i style="left:30%;top:38%"></i><i style="left:66%;top:28%"></i><i style="left:76%;top:62%"></i></div><span class="plot-title">Volcano plot</span></div>
+              <div class="paper-panel" data-label="C"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Heatmap</span></div>
+              <div class="paper-panel" data-label="D"><div class="bars"><span style="height:35%"></span><span style="height:76%"></span><span style="height:52%"></span></div><span class="plot-title">Boxplot / validation</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>生信开篇 Figure 1A-D</h3>
+              <p>适合第一张主图，交代数据来源和差异结果。</p>
+              <ul>
+                <li>A：研究流程、样本 PCA 或分组概览</li>
+                <li>B：差异分析火山图</li>
+                <li>C：差异基因热图</li>
+                <li>D：关键基因表达验证</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure two-by-three">
+              <div class="paper-panel" data-label="A"><div class="volcano"><i style="left:22%;top:52%"></i><i style="left:35%;top:30%"></i><i style="left:65%;top:36%"></i></div><span class="plot-title">DEGs</span></div>
+              <div class="paper-panel" data-label="B"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Expression heatmap</span></div>
+              <div class="paper-panel" data-label="C"><div class="bars"><span style="height:80%"></span><span style="height:58%"></span><span style="height:42%"></span></div><span class="plot-title">GO terms</span></div>
+              <div class="paper-panel" data-label="D"><div class="bars"><span style="height:64%"></span><span style="height:78%"></span><span style="height:50%"></span></div><span class="plot-title">KEGG pathways</span></div>
+              <div class="paper-panel" data-label="E"><div class="network"></div><span class="plot-title">PPI network</span></div>
+              <div class="paper-panel" data-label="F"><div class="bars"><span style="height:88%"></span><span style="height:74%"></span><span style="height:61%"></span></div><span class="plot-title">Hub genes</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>差异分析 + 富集 Figure 2A-F</h3>
+              <p>适合一篇 GEO/TCGA 入门生信文章的核心结果图。</p>
+              <ul>
+                <li>火山图和热图证明差异存在</li>
+                <li>GO/KEGG 说明功能方向</li>
+                <li>PPI 和 hub gene 排名引出后续验证</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure three-by-three">
+              <div class="paper-panel" data-label="A"><div class="curve"></div><span class="plot-title">LASSO path</span></div>
+              <div class="paper-panel" data-label="B"><div class="bars"><span style="height:46%"></span><span style="height:88%"></span><span style="height:68%"></span></div><span class="plot-title">Risk score</span></div>
+              <div class="paper-panel" data-label="C"><div class="curve"></div><span class="plot-title">KM curve</span></div>
+              <div class="paper-panel" data-label="D"><div class="curve"></div><span class="plot-title">ROC 1-year</span></div>
+              <div class="paper-panel" data-label="E"><div class="curve"></div><span class="plot-title">ROC 3-year</span></div>
+              <div class="paper-panel" data-label="F"><div class="curve"></div><span class="plot-title">ROC 5-year</span></div>
+              <div class="paper-panel" data-label="G"><div class="bars"><span style="height:55%"></span><span style="height:69%"></span><span style="height:82%"></span></div><span class="plot-title">Nomogram</span></div>
+              <div class="paper-panel" data-label="H"><div class="curve"></div><span class="plot-title">Calibration</span></div>
+              <div class="paper-panel" data-label="I"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Risk heatmap</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>预后模型 Figure 3A-I</h3>
+              <p>适合肿瘤预后、风险评分、机器学习筛基因类文章。</p>
+              <ul>
+                <li>把建模、验证、临床解释放在同一张图</li>
+                <li>ROC/KM 曲线建议同一行排列，方便比较</li>
+                <li>列线图或校准曲线可以单独放大</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure mixed">
+              <div class="paper-panel wide" data-label="A"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Immune cell heatmap</span></div>
+              <div class="paper-panel" data-label="B"><div class="bars"><span style="height:72%"></span><span style="height:41%"></span><span style="height:83%"></span></div><span class="plot-title">ssGSEA score</span></div>
+              <div class="paper-panel" data-label="C"><div class="bars"><span style="height:55%"></span><span style="height:78%"></span><span style="height:60%"></span></div><span class="plot-title">Checkpoint</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>免疫浸润 Figure</h3>
+              <p>适合 CIBERSORT、ssGSEA、ESTIMATE、免疫检查点和 TIDE 分析。</p>
+              <ul>
+                <li>热图通常信息量最大，可以放左侧大图</li>
+                <li>分组比较图和相关性图放右侧辅助说明</li>
+                <li>自由拖拽适合这种非均分版式</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure two-by-three">
+              <div class="paper-panel" data-label="A"><div class="bars"><span style="height:42%"></span><span style="height:64%"></span><span style="height:80%"></span></div><span class="plot-title">Sample clustering</span></div>
+              <div class="paper-panel" data-label="B"><div class="curve"></div><span class="plot-title">Soft threshold</span></div>
+              <div class="paper-panel" data-label="C"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Module heatmap</span></div>
+              <div class="paper-panel" data-label="D"><div class="network"></div><span class="plot-title">Module network</span></div>
+              <div class="paper-panel" data-label="E"><div class="volcano"><i style="left:25%;top:60%"></i><i style="left:55%;top:40%"></i><i style="left:78%;top:32%"></i></div><span class="plot-title">Gene significance</span></div>
+              <div class="paper-panel" data-label="F"><div class="bars"><span style="height:86%"></span><span style="height:73%"></span><span style="height:56%"></span></div><span class="plot-title">Hub genes</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>WGCNA Figure</h3>
+              <p>适合模块筛选、模块-性状相关性和 hub gene 识别。</p>
+              <ul>
+                <li>样本聚类和软阈值放前面</li>
+                <li>模块-性状热图通常作为中心信息</li>
+                <li>hub gene 结果用于连接后续实验或验证</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure three-by-three">
+              <div class="paper-panel" data-label="A"><div class="umap"></div><span class="plot-title">UMAP clusters</span></div>
+              <div class="paper-panel" data-label="B"><div class="umap"></div><span class="plot-title">Cell annotation</span></div>
+              <div class="paper-panel" data-label="C"><div class="bars"><span style="height:66%"></span><span style="height:46%"></span><span style="height:82%"></span></div><span class="plot-title">Cell proportion</span></div>
+              <div class="paper-panel" data-label="D"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Marker heatmap</span></div>
+              <div class="paper-panel" data-label="E"><div class="bars"><span style="height:40%"></span><span style="height:72%"></span><span style="height:54%"></span></div><span class="plot-title">Violin plot</span></div>
+              <div class="paper-panel" data-label="F"><div class="umap"></div><span class="plot-title">Feature plot</span></div>
+              <div class="paper-panel" data-label="G"><div class="curve"></div><span class="plot-title">Trajectory</span></div>
+              <div class="paper-panel" data-label="H"><div class="network"></div><span class="plot-title">Cell communication</span></div>
+              <div class="paper-panel" data-label="I"><div class="bars"><span style="height:62%"></span><span style="height:86%"></span><span style="height:45%"></span></div><span class="plot-title">Pathway score</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>单细胞 Figure</h3>
+              <p>适合 UMAP、细胞注释、marker、细胞比例、拟时序和通讯分析。</p>
+              <ul>
+                <li>UMAP 类图片通常放第一行，便于读者建立坐标</li>
+                <li>marker/violin/feature plot 放中间解释细胞类型</li>
+                <li>拟时序和通讯分析放最后引出机制</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure two-by-three">
+              <div class="paper-panel" data-label="A"><div class="bars"><span style="height:48%"></span><span style="height:84%"></span><span style="height:63%"></span></div><span class="plot-title">qPCR</span></div>
+              <div class="paper-panel" data-label="B"><div class="blot"><span style="width:70%"></span><span style="width:48%"></span><span style="width:84%"></span><span style="width:58%"></span></div><span class="plot-title">Western blot</span></div>
+              <div class="paper-panel" data-label="C"><div class="microscope"></div><span class="plot-title">IHC / IF</span></div>
+              <div class="paper-panel" data-label="D"><div class="microscope"></div><span class="plot-title">Migration</span></div>
+              <div class="paper-panel" data-label="E"><div class="bars"><span style="height:36%"></span><span style="height:72%"></span><span style="height:54%"></span></div><span class="plot-title">Apoptosis</span></div>
+              <div class="paper-panel" data-label="F"><div class="curve"></div><span class="plot-title">Rescue assay</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>实验验证 Figure</h3>
+              <p>适合 qPCR、WB、IHC/IF、迁移侵袭、流式、rescue 实验。</p>
+              <ul>
+                <li>原始实验图和统计图可以相邻放置</li>
+                <li>WB/IHC 这类横向图可以手动拉宽</li>
+                <li>主结论图放大，重复验证图缩小</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure mixed">
+              <div class="paper-panel wide" data-label="A"><div class="microscope"></div><span class="plot-title">Mechanism diagram</span></div>
+              <div class="paper-panel" data-label="B"><div class="curve"></div><span class="plot-title">Key evidence</span></div>
+              <div class="paper-panel" data-label="C"><div class="network"></div><span class="plot-title">Pathway model</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>Graphical Abstract / 机制摘要图</h3>
+              <p>适合把机制图、关键结果图、路径图整合成论文摘要图或小红书封面素材。</p>
+              <ul>
+                <li>机制图通常放大占左侧或上方</li>
+                <li>关键证据图放在旁边作为支撑</li>
+                <li>适合使用自由拖拽，不建议均分网格</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="scenario-card">
+            <div class="scenario-figure three-by-three">
+              <div class="paper-panel" data-label="A"><div class="volcano"></div><span class="plot-title">Dataset 1</span></div>
+              <div class="paper-panel" data-label="B"><div class="volcano"></div><span class="plot-title">Dataset 2</span></div>
+              <div class="paper-panel" data-label="C"><div class="volcano"></div><span class="plot-title">Dataset 3</span></div>
+              <div class="paper-panel" data-label="D"><div class="heatmap"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><span class="plot-title">Validation heatmap</span></div>
+              <div class="paper-panel" data-label="E"><div class="bars"><span style="height:52%"></span><span style="height:72%"></span><span style="height:61%"></span></div><span class="plot-title">Subtype 1</span></div>
+              <div class="paper-panel" data-label="F"><div class="bars"><span style="height:80%"></span><span style="height:63%"></span><span style="height:41%"></span></div><span class="plot-title">Subtype 2</span></div>
+              <div class="paper-panel" data-label="G"><div class="curve"></div><span class="plot-title">External cohort</span></div>
+              <div class="paper-panel" data-label="H"><div class="network"></div><span class="plot-title">Pathway network</span></div>
+              <div class="paper-panel" data-label="I"><div class="bars"><span style="height:76%"></span><span style="height:66%"></span><span style="height:58%"></span></div><span class="plot-title">Sensitivity</span></div>
+            </div>
+            <div class="scenario-body">
+              <h3>Supplementary Figure / 补充图</h3>
+              <p>适合把多个队列、多种算法、多组验证结果集中放到补充材料。</p>
+              <ul>
+                <li>图片数量多时先用 4×4 或 5×5 自动排版</li>
+                <li>再用参考线微调，让同类图片对齐</li>
+                <li>适合展示稳健性分析和外部验证</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="hidden-controls" aria-hidden="true">
+        <input id="inputs" value="volcano.png heatmap.png boxplot.png km.png">
+        <input id="output" value="Figure1_ABCD.tiff">
+        <select id="layout"><option value="2x2" selected>2x2</option></select>
+        <select id="dpi"><option selected>600</option></select>
+        <input id="labels" value="A,B,C,D">
+        <select id="labelPosition"><option value="topleft" selected>左上</option></select>
+        <input id="labelSize" value="42">
+        <div id="command"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const panelFiles = [];
+    let selectedIndex = -1;
+    let isDraggingPanel = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let lastCanvasWidth = 0;
+    let lastCanvasHeight = 0;
+    let activeGuides = [];
+    let outputDirectoryHandle = null;
+    const snapTolerance = 14;
+
+    const defaults = {
+      inputs: "volcano.png heatmap.png boxplot.png km.png",
+      output: "Figure1_ABCD.tiff",
+      layout: "2x2",
+      dpi: "600",
+      labels: "A,B,C,D",
+      labelPosition: "topleft",
+      gap: "32",
+      labelSize: "42"
+    };
+
+    const ids = Object.keys(defaults);
+    const scriptPath = "scripts/assemble_figure.py";
+    const dropzone = document.getElementById("dropzone");
+    const filePicker = document.getElementById("filePicker");
+    const fileList = document.getElementById("fileList");
+    const canvas = document.getElementById("figureCanvas");
+    const ctx = canvas.getContext("2d");
+    const outputFolderStatus = document.getElementById("outputFolderStatus");
+    const importStatus = document.getElementById("importStatus");
+
+    function defaultLabels(count) {
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      return Array.from({ length: count }, (_, index) => letters[index] || `A${index + 1}`);
+    }
+
+    function parseGrid(layout, count) {
+      if (layout) {
+        const parts = layout.toLowerCase().split("x").map(Number);
+        if (parts.length === 2 && parts[0] > 0 && parts[1] > 0 && parts[0] * parts[1] >= count) {
+          return { rows: parts[0], cols: parts[1] };
+        }
+      }
+
+      if (count === 4) return { rows: 2, cols: 2 };
+      if (count === 5 || count === 6) return { rows: 2, cols: 3 };
+      if (count >= 7 && count <= 9) return { rows: 3, cols: 3 };
+      if (count >= 10 && count <= 12) return { rows: 3, cols: 4 };
+      if (count >= 13 && count <= 16) return { rows: 4, cols: 4 };
+      if (count >= 17 && count <= 20) return { rows: 4, cols: 5 };
+      if (count >= 21 && count <= 25) return { rows: 5, cols: 5 };
+      const cols = Math.ceil(Math.sqrt(Math.max(count, 1)));
+      return { rows: Math.ceil(Math.max(count, 1) / cols), cols };
+    }
+
+    function isSupportedImage(file) {
+      const name = file.name.toLowerCase();
+      return file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|tiff?|svg)$/i.test(name);
+    }
+
+    function imageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = () => resolve({ file, image, url, box: null });
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error(`无法读取图片：${file.name}`));
+        };
+        image.src = url;
+      });
+    }
+
+    async function addFiles(fileListLike) {
+      const incoming = Array.from(fileListLike || []);
+      const files = incoming.filter(isSupportedImage);
+      const skipped = incoming.length - files.length;
+      if (!files.length) {
+        importStatus.textContent = skipped ? "导入失败：没有识别到可用图片文件。" : "导入状态：没有选择文件。";
+        return;
+      }
+
+      const settled = await Promise.allSettled(files.map(imageFromFile));
+      const loaded = settled.filter(result => result.status === "fulfilled").map(result => result.value);
+      const failed = settled.length - loaded.length;
+
+      if (!loaded.length) {
+        importStatus.textContent = "导入失败：浏览器无法读取这些图片。建议先转成 PNG 或 JPG 后再试。";
+        return;
+      }
+
+      panelFiles.push(...loaded);
+      selectedIndex = panelFiles.length - 1;
+      syncInputsFromFiles();
+      resetGridLayout();
+      renderFileList();
+      renderCanvas();
+      importStatus.textContent = `导入成功：${loaded.length} 张图片。${failed ? `读取失败 ${failed} 张。` : ""}${skipped ? `跳过非图片文件 ${skipped} 个。` : ""}`;
+      filePicker.value = "";
+    }
+
+    function syncInputsFromFiles() {
+      if (!panelFiles.length) return;
+      if (document.getElementById("inputs")) document.getElementById("inputs").value = panelFiles.map(item => item.file.name).join(" ");
+      if (document.getElementById("labels")) document.getElementById("labels").value = defaultLabels(panelFiles.length).join(",");
+      const recommended = parseGrid("", panelFiles.length);
+      if (document.getElementById("layout")) document.getElementById("layout").value = `${recommended.rows}x${recommended.cols}`;
+      if (document.getElementById("previewLayout")) document.getElementById("previewLayout").value = `${recommended.rows}x${recommended.cols}`;
+      buildCommand();
+    }
+
+    function moveFile(from, to) {
+      if (to < 0 || to >= panelFiles.length) return;
+      const [item] = panelFiles.splice(from, 1);
+      panelFiles.splice(to, 0, item);
+      syncInputsFromFiles();
+      renderFileList();
+      renderCanvas();
+    }
+
+    function removeFile(index) {
+      const [item] = panelFiles.splice(index, 1);
+      if (item) URL.revokeObjectURL(item.url);
+      selectedIndex = Math.min(selectedIndex, panelFiles.length - 1);
+      syncInputsFromFiles();
+      resetGridLayout();
+      renderFileList();
+      renderCanvas();
+    }
+
+    function renderFileList() {
+      if (!panelFiles.length) {
+        fileList.innerHTML = '<p class="note">还没有导入图片。拖入图片或点击“从电脑选择图片”。</p>';
+        return;
+      }
+
+      const labels = defaultLabels(panelFiles.length);
+      fileList.innerHTML = panelFiles.map((item, index) => `
+        <div class="file-row">
+          <img src="${item.url}" alt="">
+          <div class="file-meta">
+            <span class="file-name">${item.file.name}</span>
+            <span class="file-label">Panel ${labels[index]} · ${item.image.naturalWidth}×${item.image.naturalHeight}</span>
+          </div>
+          <div class="row-actions">
+            <button class="icon-btn" type="button" data-action="up" data-index="${index}" title="上移">↑</button>
+            <button class="icon-btn" type="button" data-action="down" data-index="${index}" title="下移">↓</button>
+            <button class="icon-btn" type="button" data-action="remove" data-index="${index}" title="删除">×</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function drawContain(image, x, y, width, height) {
+      const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      const dx = x + (width - drawWidth) / 2;
+      const dy = y + (height - drawHeight) / 2;
+      ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+    }
+
+    function controlValue(id, fallback = "") {
+      return document.getElementById(id)?.value ?? fallback;
+    }
+
+    function getLayoutMetrics(countOverride) {
+      const count = countOverride ?? panelFiles.length;
+      const targetWidth = Number(controlValue("canvasWidth", "2400")) || 2400;
+      const requestedHeight = Number(controlValue("canvasHeight", "1800")) || 1800;
+      const layout = controlValue("previewLayout", "");
+      const grid = parseGrid(layout, Math.max(count, 1));
+      const gap = Number(controlValue("gap", "32")) || 32;
+      const outer = 48;
+      const panelWidth = Math.floor((targetWidth - outer * 2 - gap * (grid.cols - 1)) / grid.cols);
+      const panelHeight = Math.floor((requestedHeight - outer * 2 - gap * (grid.rows - 1)) / grid.rows);
+      const targetHeight = requestedHeight;
+      return { targetWidth, targetHeight, grid, gap, outer, panelWidth, panelHeight };
+    }
+
+    function resetGridLayout() {
+      const metrics = getLayoutMetrics();
+      panelFiles.forEach((item, index) => {
+        const row = Math.floor(index / metrics.grid.cols);
+        const col = index % metrics.grid.cols;
+        item.box = {
+          x: metrics.outer + col * (metrics.panelWidth + metrics.gap),
+          y: metrics.outer + row * (metrics.panelHeight + metrics.gap),
+          width: metrics.panelWidth,
+          height: metrics.panelHeight
+        };
+      });
+      lastCanvasWidth = metrics.targetWidth;
+      lastCanvasHeight = metrics.targetHeight;
+    }
+
+    function ensureManualBoxes() {
+      const metrics = getLayoutMetrics();
+      if (lastCanvasWidth !== metrics.targetWidth || lastCanvasHeight !== metrics.targetHeight) {
+        resetGridLayout();
+        return metrics;
+      }
+
+      const missingBox = panelFiles.some(item => !item.box);
+      if (missingBox) resetGridLayout();
+      return metrics;
+    }
+
+    function drawPanel(item, index, labels, labelSize, labelPosition) {
+      const box = item.box;
+      if (!box) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(box.x, box.y, box.width, box.height);
+      drawContain(item.image, box.x, box.y, box.width, box.height);
+
+      if (index === selectedIndex && controlValue("arrangeMode", "grid") === "manual") {
+        ctx.save();
+        ctx.strokeStyle = "#146c94";
+        ctx.lineWidth = Math.max(4, Math.round(labelSize / 12));
+        ctx.setLineDash([18, 12]);
+        ctx.strokeRect(box.x, box.y, box.width, box.height);
+        ctx.restore();
+      }
+
+      const label = labels[index];
+      ctx.font = `700 ${labelSize}px Arial, Microsoft YaHei, sans-serif`;
+      const metrics = ctx.measureText(label);
+      const labelWidth = metrics.width;
+      const labelHeight = labelSize;
+      const margin = Math.max(16, Math.round(labelSize * 0.3));
+      const [lx, ly] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin);
+
+      ctx.fillStyle = "#111827";
+      ctx.fillText(label, lx, ly);
+    }
+
+    function drawGuides() {
+      if (!activeGuides.length) return;
+      ctx.save();
+      ctx.strokeStyle = "#0ea5e9";
+      ctx.lineWidth = 4;
+      ctx.setLineDash([16, 10]);
+      activeGuides.forEach(guide => {
+        ctx.beginPath();
+        if (guide.type === "v") {
+          ctx.moveTo(guide.value, 0);
+          ctx.lineTo(guide.value, canvas.height);
+        } else {
+          ctx.moveTo(0, guide.value);
+          ctx.lineTo(canvas.width, guide.value);
+        }
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    function guideCandidates(axis, movingIndex) {
+      const metrics = getLayoutMetrics();
+      const canvasMax = axis === "x" ? metrics.targetWidth : metrics.targetHeight;
+      const values = [0, metrics.outer, canvasMax / 2, canvasMax - metrics.outer, canvasMax];
+
+      panelFiles.forEach((item, index) => {
+        if (index === movingIndex || !item.box) return;
+        const box = item.box;
+        if (axis === "x") {
+          values.push(box.x, box.x + box.width / 2, box.x + box.width);
+        } else {
+          values.push(box.y, box.y + box.height / 2, box.y + box.height);
+        }
+      });
+
+      return values;
+    }
+
+    function snapBox(box, movingIndex) {
+      const xAnchors = [
+        { value: box.x, apply: snapped => { box.x = snapped; } },
+        { value: box.x + box.width / 2, apply: snapped => { box.x = snapped - box.width / 2; } },
+        { value: box.x + box.width, apply: snapped => { box.x = snapped - box.width; } }
+      ];
+      const yAnchors = [
+        { value: box.y, apply: snapped => { box.y = snapped; } },
+        { value: box.y + box.height / 2, apply: snapped => { box.y = snapped - box.height / 2; } },
+        { value: box.y + box.height, apply: snapped => { box.y = snapped - box.height; } }
+      ];
+
+      let bestX = null;
+      let bestY = null;
+
+      guideCandidates("x", movingIndex).forEach(candidate => {
+        xAnchors.forEach(anchor => {
+          const distance = Math.abs(anchor.value - candidate);
+          if (distance <= snapTolerance && (!bestX || distance < bestX.distance)) {
+            bestX = { distance, candidate, apply: anchor.apply };
+          }
+        });
+      });
+
+      guideCandidates("y", movingIndex).forEach(candidate => {
+        yAnchors.forEach(anchor => {
+          const distance = Math.abs(anchor.value - candidate);
+          if (distance <= snapTolerance && (!bestY || distance < bestY.distance)) {
+            bestY = { distance, candidate, apply: anchor.apply };
+          }
+        });
+      });
+
+      activeGuides = [];
+      if (bestX) {
+        bestX.apply(bestX.candidate);
+        activeGuides.push({ type: "v", value: bestX.candidate });
+      }
+      if (bestY) {
+        bestY.apply(bestY.candidate);
+        activeGuides.push({ type: "h", value: bestY.candidate });
+      }
+    }
+
+    function labelXY(position, x, y, width, height, labelWidth, labelHeight, margin) {
+      if (position === "topright") return [x + width - labelWidth - margin, y + margin];
+      if (position === "bottomleft") return [x + margin, y + height - labelHeight - margin];
+      if (position === "bottomright") return [x + width - labelWidth - margin, y + height - labelHeight - margin];
+      return [x + margin, y + margin];
+    }
+
+    function renderCanvas() {
+      const count = panelFiles.length;
+      const arrangeMode = controlValue("arrangeMode", "grid");
+      const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
+      const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
+      const labelPosition = controlValue("previewLabelPosition", "topleft");
+
+      canvas.width = metrics.targetWidth;
+      canvas.height = metrics.targetHeight;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (!count) {
+        ctx.fillStyle = "#64748b";
+        ctx.font = "42px Microsoft YaHei, Segoe UI, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("拖入图片后在这里预览组图", canvas.width / 2, canvas.height / 2);
+        return;
+      }
+
+      const labels = defaultLabels(count);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+
+      if (arrangeMode === "grid") {
+        resetGridLayout();
+      }
+
+      panelFiles.forEach((item, index) => drawPanel(item, index, labels, labelSize, labelPosition));
+      drawGuides();
+    }
+
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.clientX ?? event.touches?.[0]?.clientX;
+      const clientY = event.clientY ?? event.touches?.[0]?.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function hitTest(point) {
+      for (let index = panelFiles.length - 1; index >= 0; index -= 1) {
+        const box = panelFiles[index].box;
+        if (!box) continue;
+        if (point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
+    function startPanelDrag(event) {
+      if (controlValue("arrangeMode", "grid") !== "manual") return;
+      const point = canvasPoint(event);
+      const index = hitTest(point);
+      selectedIndex = index;
+      if (index >= 0) {
+        const box = panelFiles[index].box;
+        isDraggingPanel = true;
+        dragOffsetX = point.x - box.x;
+        dragOffsetY = point.y - box.y;
+        canvas.classList.add("dragging-canvas");
+        event.preventDefault();
+      }
+      renderCanvas();
+    }
+
+    function movePanelDrag(event) {
+      if (!isDraggingPanel || selectedIndex < 0) return;
+      const point = canvasPoint(event);
+      const box = panelFiles[selectedIndex].box;
+      box.x = point.x - dragOffsetX;
+      box.y = point.y - dragOffsetY;
+      snapBox(box, selectedIndex);
+      event.preventDefault();
+      renderCanvas();
+    }
+
+    function endPanelDrag() {
+      isDraggingPanel = false;
+      activeGuides = [];
+      canvas.classList.remove("dragging-canvas");
+      renderCanvas();
+    }
+
+    function scaleSelected(factor) {
+      if (selectedIndex < 0 || !panelFiles[selectedIndex]?.box) return;
+      const box = panelFiles[selectedIndex].box;
+      const centerX = box.x + box.width / 2;
+      const centerY = box.y + box.height / 2;
+      box.width = Math.max(80, box.width * factor);
+      box.height = Math.max(80, box.height * factor);
+      box.x = centerX - box.width / 2;
+      box.y = centerY - box.height / 2;
+      renderCanvas();
+    }
+
+    function moveLayer(direction) {
+      if (selectedIndex < 0) return;
+      const nextIndex = selectedIndex + direction;
+      if (nextIndex < 0 || nextIndex >= panelFiles.length) return;
+      const [item] = panelFiles.splice(selectedIndex, 1);
+      panelFiles.splice(nextIndex, 0, item);
+      selectedIndex = nextIndex;
+      syncInputsFromFiles();
+      renderFileList();
+      renderCanvas();
+    }
+
+    function canvasBlob() {
+      return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    }
+
+    function outputPngName() {
+      const outputName = controlValue("output", "combined_figure").trim().replace(/\.[^.]+$/, "") || "combined_figure";
+      return `${outputName}.png`;
+    }
+
+    function downloadCanvasPng() {
+      if (!panelFiles.length) return;
+      const link = document.createElement("a");
+      link.download = outputPngName();
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    async function chooseOutputFolder() {
+      outputFolderStatus.textContent = "正在检查浏览器是否支持选择输出文件夹...";
+      if (!window.showDirectoryPicker) {
+        outputDirectoryHandle = null;
+        outputFolderStatus.textContent = "当前浏览器不支持直接选择输出文件夹。请使用“保存/下载 PNG”，文件会进入浏览器默认下载目录。";
+        return;
+      }
+
+      try {
+        outputFolderStatus.textContent = "正在打开文件夹选择窗口...";
+        outputDirectoryHandle = await window.showDirectoryPicker();
+        outputFolderStatus.textContent = `输出位置：已选择文件夹 ${outputDirectoryHandle.name}`;
+      } catch (error) {
+        outputDirectoryHandle = null;
+        if (error && error.name === "AbortError") {
+          outputFolderStatus.textContent = "已取消选择文件夹。未选择时将使用浏览器默认下载目录。";
+        } else {
+          outputFolderStatus.textContent = "无法打开文件夹选择窗口。当前环境可能禁用了该权限，请使用“保存/下载 PNG”。";
+        }
+      }
+    }
+
+    async function saveCanvasPng() {
+      if (!panelFiles.length) return;
+      if (!outputDirectoryHandle) {
+        downloadCanvasPng();
+        return;
+      }
+
+      try {
+        const fileHandle = await outputDirectoryHandle.getFileHandle(outputPngName(), { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(await canvasBlob());
+        await writable.close();
+        outputFolderStatus.textContent = `已保存：${outputPngName()} → ${outputDirectoryHandle.name}`;
+      } catch {
+        outputFolderStatus.textContent = "写入文件夹失败，已改用浏览器下载。";
+        downloadCanvasPng();
+      }
+    }
+
+    function shellQuote(value) {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      if (/[\s\u4e00-\u9fa5]/.test(trimmed) && !trimmed.startsWith('"')) {
+        return `"${trimmed}"`;
+      }
+      return trimmed;
+    }
+
+    function buildCommand() {
+      const values = Object.fromEntries(ids.map(id => [id, controlValue(id).trim()]));
+      const parts = [
+        "python",
+        shellQuote(scriptPath),
+        "--input",
+        values.inputs,
+        "--output",
+        shellQuote(values.output)
+      ];
+
+      if (values.layout) parts.push("--layout", values.layout);
+      if (values.dpi) parts.push("--dpi", values.dpi);
+      if (values.labels) parts.push("--labels", shellQuote(values.labels));
+      if (values.labelPosition) parts.push("--label-position", values.labelPosition);
+      if (values.gap) parts.push("--gap", values.gap);
+      if (values.labelSize) parts.push("--label-size", values.labelSize);
+
+      if (document.getElementById("command")) document.getElementById("command").textContent = parts.join(" ");
+    }
+
+    function on(id, eventName, handler) {
+      document.getElementById(id)?.addEventListener(eventName, handler);
+    }
+
+    function initializeOutputFolderSupport() {
+      const button = document.getElementById("chooseOutputFolderBtn");
+      if (!window.showDirectoryPicker) {
+        button.disabled = true;
+        button.textContent = "当前浏览器不支持选文件夹";
+        outputFolderStatus.textContent = "输出位置：当前浏览器不支持直接选择文件夹，点击“保存/下载 PNG”会保存到默认下载目录。";
+      }
+    }
+
+    ids.forEach(id => document.getElementById(id)?.addEventListener("input", buildCommand));
+    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "gap", "arrangeMode"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", renderCanvas);
+    });
+
+    filePicker.addEventListener("change", event => addFiles(event.target.files));
+    on("pickBtn", "click", event => event.stopPropagation());
+    dropzone.addEventListener("click", event => {
+      if (event.target.id === "filePicker") return;
+      filePicker.click();
+    });
+
+    ["dragenter", "dragover"].forEach(eventName => {
+      dropzone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropzone.classList.add("dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(eventName => {
+      dropzone.addEventListener(eventName, event => {
+        event.preventDefault();
+        dropzone.classList.remove("dragging");
+      });
+    });
+
+    dropzone.addEventListener("drop", event => addFiles(event.dataTransfer.files));
+
+    fileList.addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const index = Number(button.dataset.index);
+      if (button.dataset.action === "up") moveFile(index, index - 1);
+      if (button.dataset.action === "down") moveFile(index, index + 1);
+      if (button.dataset.action === "remove") removeFile(index);
+    });
+
+    on("renderBtn", "click", renderCanvas);
+    on("downloadPngBtn", "click", saveCanvasPng);
+    on("chooseOutputFolderBtn", "click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      chooseOutputFolder();
+    });
+    on("resetLayoutBtn", "click", () => {
+      resetGridLayout();
+      if (document.getElementById("arrangeMode")) document.getElementById("arrangeMode").value = "manual";
+      renderCanvas();
+    });
+    on("scaleUpBtn", "click", () => scaleSelected(1.12));
+    on("scaleDownBtn", "click", () => scaleSelected(0.9));
+    on("bringForwardBtn", "click", () => moveLayer(1));
+    on("sendBackwardBtn", "click", () => moveLayer(-1));
+    canvas.addEventListener("pointerdown", startPanelDrag);
+    canvas.addEventListener("pointermove", movePanelDrag);
+    canvas.addEventListener("pointerup", endPanelDrag);
+    canvas.addEventListener("pointerleave", endPanelDrag);
+    canvas.addEventListener("pointercancel", endPanelDrag);
+    on("clearFilesBtn", "click", () => {
+      panelFiles.splice(0).forEach(item => URL.revokeObjectURL(item.url));
+      selectedIndex = -1;
+      renderFileList();
+      renderCanvas();
+    });
+
+    buildCommand();
+    renderFileList();
+    renderCanvas();
+    initializeOutputFolderSupport();
+  </script>
+</body>
+</html>
