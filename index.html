@@ -191,6 +191,12 @@
       border-radius: 8px;
       padding: 8px;
       background: #fff;
+      cursor: pointer;
+    }
+
+    .file-row.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(20, 108, 148, 0.15);
     }
 
     .file-row img {
@@ -223,6 +229,8 @@
     .row-actions {
       display: flex;
       gap: 4px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .icon-btn {
@@ -232,6 +240,12 @@
       background: #eef2f7;
       color: #334155;
       font-weight: 700;
+    }
+
+    .text-controls {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      margin-top: 4px;
     }
 
     .preview-box {
@@ -663,6 +677,293 @@
       margin-top: 10px;
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.62);
+    }
+
+    .modal[hidden] {
+      display: none;
+    }
+
+    .modal-panel {
+      width: min(1040px, 100%);
+      max-height: min(88vh, 900px);
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 16px;
+    }
+
+    .preview-modal-canvas {
+      width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      box-shadow: none;
+      cursor: default;
+      touch-action: auto;
+    }
+
+    .fullscreen-editor .modal-panel {
+      width: calc(100vw - 24px);
+      height: calc(100vh - 24px);
+      max-height: none;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .fullscreen-editor .modal-body {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+    }
+
+    .fullscreen-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .fullscreen-canvas-wrap {
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef2f7;
+      padding: 12px;
+    }
+
+    #fullscreenCanvas {
+      max-width: none;
+      box-shadow: none;
+    }
+
+    .svg-editor .modal-panel {
+      width: calc(100vw - 24px);
+      height: calc(100vh - 24px);
+      max-height: none;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .svg-editor .modal-body {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .svg-editor-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 520px;
+      gap: 12px;
+      align-items: start;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .svg-stage {
+      height: 100%;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef2f7;
+      padding: 12px;
+    }
+
+    .svg-stage svg {
+      display: block;
+      max-width: none;
+      background: #fff;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    }
+
+    .svg-stage .svg-edit-selected {
+      outline: 3px dashed #ef476f;
+      outline-offset: 4px;
+    }
+
+    .svg-props {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 10px;
+      align-content: start;
+      max-height: 100%;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fafc;
+    }
+
+    .svg-props .note,
+    .svg-props .svg-element-list,
+    .svg-props .svg-nudge,
+    .svg-props .actions,
+    .svg-props .svg-mini-grid {
+      grid-column: 1 / -1;
+    }
+
+    .svg-props label {
+      gap: 3px;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .svg-props input,
+    .svg-props select {
+      height: 34px;
+      min-height: 0;
+      padding: 5px 8px;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .svg-props input[type="color"] {
+      padding: 2px;
+    }
+
+    .svg-props input[type="range"] {
+      height: 28px;
+      padding: 0;
+    }
+
+    .svg-props .note {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .svg-element-list {
+      height: 92px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .svg-element-list button {
+      display: block;
+      width: 100%;
+      border-radius: 0;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 8px;
+    }
+
+    .svg-element-list button.active {
+      background: var(--soft);
+      color: #0f4f63;
+    }
+
+    .svg-mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .svg-nudge {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      gap: 4px;
+      justify-content: center;
+    }
+
+    .svg-nudge button,
+    .svg-props .actions button {
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+
+    .svg-nudge button:nth-child(1) {
+      grid-column: 2;
+    }
+
+    .svg-nudge button:nth-child(2) {
+      grid-column: 1;
+    }
+
+    .svg-nudge button:nth-child(5) {
+      grid-column: 2;
+    }
+
+    .crop-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .crop-canvas-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #eef2f7;
+      padding: 12px;
+    }
+
+    #cropCanvas {
+      max-width: 100%;
+      box-shadow: none;
+      cursor: default;
+      touch-action: auto;
+    }
+
+    .crop-controls {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .crop-control {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) 48px;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .crop-control input {
+      padding: 0;
+    }
+
     @media (max-width: 880px) {
       .hero,
       .cards,
@@ -673,6 +974,14 @@
 
       .form-grid {
         grid-template-columns: repeat(2, 1fr);
+      }
+
+      .crop-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .svg-editor-grid {
+        grid-template-columns: 1fr;
       }
 
       h1 {
@@ -731,14 +1040,14 @@
           <div>
             <div id="dropzone" class="dropzone">
               <strong>拖入图片到这里</strong>
-              <p>网页端建议 PNG、JPG、JPEG、WEBP。按导入顺序自动标 A/B/C/D。</p>
+              <p>支持 PNG、JPG、JPEG、WEBP、GIF、BMP、SVG；TIFF 取决于浏览器支持。按导入顺序自动标 A/B/C/D。</p>
               <label id="pickBtn" class="button-like" for="filePicker">从电脑选择图片</label>
-              <input id="filePicker" type="file" accept="image/png,image/jpeg,image/webp,image/tiff" multiple>
+              <input id="filePicker" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/svg+xml,image/tiff,.tif,.tiff,.svg" multiple>
             </div>
 
             <div class="actions">
               <button id="renderBtn" type="button">生成预览</button>
-              <button id="downloadPngBtn" class="secondary" type="button">保存/下载 PNG</button>
+              <button id="downloadPngBtn" class="secondary" type="button">保存/下载图片</button>
               <button id="chooseOutputFolderBtn" type="button">选择输出文件夹</button>
               <button id="clearFilesBtn" type="button">清空图片</button>
             </div>
@@ -801,20 +1110,76 @@
                 图间距
                 <input id="gap" type="number" min="0" value="32">
               </label>
+              <label>
+                导出 DPI
+                <select id="exportDpi">
+                  <option value="72">72</option>
+                  <option value="150">150</option>
+                  <option value="300" selected>300</option>
+                  <option value="450">450</option>
+                  <option value="600">600</option>
+                  <option value="900">900</option>
+                  <option value="1200">1200</option>
+                </select>
+              </label>
+              <label>
+                导出格式
+                <select id="exportFormat">
+                  <option value="png" selected>PNG</option>
+                  <option value="jpeg">JPG / JPEG</option>
+                  <option value="webp">WEBP</option>
+                  <option value="svg">SVG 矢量图</option>
+                </select>
+              </label>
             </div>
 
             <div class="actions">
               <button id="resetLayoutBtn" type="button">重置为网格</button>
               <button id="bringForwardBtn" type="button">上移一层</button>
               <button id="sendBackwardBtn" type="button">下移一层</button>
+              <button id="fullscreenEditBtn" type="button">全屏放大编辑</button>
+              <button id="svgInnerEditBtn" type="button">SVG 内部编辑</button>
               <button id="scaleUpBtn" class="secondary" type="button">放大选中图</button>
               <button id="scaleDownBtn" class="secondary" type="button">缩小选中图</button>
+            </div>
+
+            <div class="text-controls">
+              <div class="form-grid">
+                <label>
+                  文本内容
+                  <input id="textContentInput" type="text" value="请输入文字">
+                </label>
+                <label>
+                  文本字体
+                  <select id="textFont">
+                    <option value="Microsoft YaHei" selected>微软雅黑</option>
+                    <option value="SimSun">宋体</option>
+                    <option value="SimHei">黑体</option>
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Georgia">Georgia</option>
+                  </select>
+                </label>
+                <label>
+                  文本字号
+                  <input id="textSize" type="number" min="12" max="240" value="48">
+                </label>
+                <label>
+                  文本颜色
+                  <input id="textColor" type="color" value="#111827">
+                </label>
+              </div>
+              <div class="actions">
+                <button id="addTextBtn" type="button">添加文本框</button>
+                <button id="updateTextBtn" class="secondary" type="button">更新选中文本</button>
+                <button id="deleteTextBtn" type="button">删除选中文本</button>
+              </div>
             </div>
 
             <div class="canvas-wrap">
               <canvas id="figureCanvas" width="1200" height="800"></canvas>
             </div>
-            <p class="manual-hint">自由拖拽模式：点击图片选中后可直接拖动；靠近画布边缘、中心线或其他图片边缘时会显示蓝色参考线并自动吸附。用“放大/缩小选中图”调整大小，用“上移/下移一层”调整遮挡顺序。</p>
+            <p class="manual-hint">自由拖拽模式：点击图片或文本框选中后可直接拖动；靠近画布边缘、中心线或其他图片边缘时会显示蓝色参考线并自动吸附。双击图片可全屏编辑，用“放大/缩小选中图”调整图片大小，用文本控件编辑选中文本。</p>
           </div>
         </div>
       </section>
@@ -1011,7 +1376,15 @@
         <input id="inputs" value="volcano.png heatmap.png boxplot.png km.png">
         <input id="output" value="Figure1_ABCD.tiff">
         <select id="layout"><option value="2x2" selected>2x2</option></select>
-        <select id="dpi"><option selected>600</option></select>
+        <select id="dpi">
+          <option value="72">72</option>
+          <option value="150">150</option>
+          <option value="300" selected>300</option>
+          <option value="450">450</option>
+          <option value="600">600</option>
+          <option value="900">900</option>
+          <option value="1200">1200</option>
+        </select>
         <input id="labels" value="A,B,C,D">
         <select id="labelPosition"><option value="topleft" selected>左上</option></select>
         <input id="labelSize" value="42">
@@ -1020,16 +1393,178 @@
     </div>
   </main>
 
+  <div id="previewModal" class="modal" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+      <div class="modal-header">
+        <h3 id="previewTitle">导出预览</h3>
+        <button id="closePreviewBtn" class="icon-btn" type="button" aria-label="关闭预览">×</button>
+      </div>
+      <div class="modal-body">
+        <canvas id="previewCanvas" class="preview-modal-canvas" width="1200" height="800"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div id="cropModal" class="modal" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <div class="modal-header">
+        <h3 id="cropTitle">裁剪图片</h3>
+        <button id="closeCropBtn" class="icon-btn" type="button" aria-label="关闭裁剪">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="crop-grid">
+          <div class="crop-canvas-wrap">
+            <canvas id="cropCanvas" width="900" height="650"></canvas>
+          </div>
+          <div class="crop-controls">
+            <div class="crop-control">
+              <span>左</span>
+              <input id="cropLeft" type="range" min="0" max="90" value="0">
+              <output id="cropLeftValue">0%</output>
+            </div>
+            <div class="crop-control">
+              <span>右</span>
+              <input id="cropRight" type="range" min="0" max="90" value="0">
+              <output id="cropRightValue">0%</output>
+            </div>
+            <div class="crop-control">
+              <span>上</span>
+              <input id="cropTop" type="range" min="0" max="90" value="0">
+              <output id="cropTopValue">0%</output>
+            </div>
+            <div class="crop-control">
+              <span>下</span>
+              <input id="cropBottom" type="range" min="0" max="90" value="0">
+              <output id="cropBottomValue">0%</output>
+            </div>
+            <div class="actions">
+              <button id="applyCropBtn" type="button">应用裁剪</button>
+              <button id="resetCropBtn" class="secondary" type="button">重置裁剪</button>
+            </div>
+            <p class="note">裁剪只影响最终拼图，不会修改原始图片文件。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="fullscreenModal" class="modal fullscreen-editor" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="fullscreenTitle">
+      <div class="modal-header">
+        <h3 id="fullscreenTitle">全屏放大编辑</h3>
+        <button id="closeFullscreenBtn" class="icon-btn" type="button" aria-label="关闭全屏编辑">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="fullscreen-toolbar">
+          <button id="fullscreenScaleUpBtn" class="secondary" type="button">放大选中项</button>
+          <button id="fullscreenScaleDownBtn" class="secondary" type="button">缩小选中项</button>
+          <button id="fullscreenZoomInBtn" type="button">放大视图</button>
+          <button id="fullscreenZoomOutBtn" type="button">缩小视图</button>
+          <button id="fullscreenCancelBtn" type="button">退出全屏</button>
+          <span class="note">整张组合图已放大显示，拖动任意图片或文本会直接更新主排版。</span>
+        </div>
+        <div class="fullscreen-canvas-wrap">
+          <canvas id="fullscreenCanvas" width="1200" height="800"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="svgEditorModal" class="modal svg-editor" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="svgEditorTitle">
+      <div class="modal-header">
+        <h3 id="svgEditorTitle">SVG 内部编辑</h3>
+        <button id="closeSvgEditorBtn" class="icon-btn" type="button" aria-label="关闭 SVG 内部编辑">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="svg-editor-grid">
+          <div id="svgEditorStage" class="svg-stage"></div>
+          <div class="svg-props">
+            <p id="svgEditorStatus" class="note">点击左侧 SVG 内部元素后编辑属性。</p>
+            <div id="svgElementStats" class="note">等待识别 SVG 元素。</div>
+            <div id="svgElementList" class="svg-element-list" aria-label="SVG 元素列表"></div>
+            <label>
+              元素文字
+              <input id="svgTextValue" type="text" placeholder="仅文本元素可编辑">
+            </label>
+            <label>
+              字号
+              <input id="svgFontSize" type="number" min="1" step="1" value="16">
+            </label>
+            <label>
+              填充色
+              <input id="svgFillColor" type="color" value="#000000">
+            </label>
+            <label>
+              描边色
+              <input id="svgStrokeColor" type="color" value="#000000">
+            </label>
+            <label>
+              线宽
+              <input id="svgStrokeWidth" type="number" min="0" step="0.5" value="1">
+            </label>
+            <label>
+              透明度
+              <input id="svgOpacity" type="range" min="0" max="1" step="0.05" value="1">
+            </label>
+            <div class="svg-mini-grid">
+              <label>
+                X
+                <input id="svgElementX" type="number" step="1" value="0">
+              </label>
+              <label>
+                Y
+                <input id="svgElementY" type="number" step="1" value="0">
+              </label>
+            </div>
+            <div class="svg-mini-grid">
+              <label>
+                新文本
+                <input id="svgNewTextValue" type="text" value="新文本">
+              </label>
+              <label>
+                新文本字号
+                <input id="svgNewTextSize" type="number" min="1" value="24">
+              </label>
+            </div>
+            <div class="svg-nudge" aria-label="微移 SVG 元素">
+              <button id="svgNudgeUpBtn" type="button">↑</button>
+              <button id="svgNudgeLeftBtn" type="button">←</button>
+              <button id="svgNudgeRightBtn" type="button">→</button>
+              <span></span>
+              <button id="svgNudgeDownBtn" type="button">↓</button>
+            </div>
+            <div class="actions">
+              <button id="svgAddTextBtn" type="button">添加文本</button>
+              <button id="svgClearTextBtn" type="button">清空文字</button>
+              <button id="svgDeleteElementBtn" type="button">删除元素</button>
+              <button id="svgApplyBtn" class="secondary" type="button">应用修改</button>
+            </div>
+            <p class="note">提示：先点左侧元素或列表项，再改属性；添加文本后可拖到矢量软件继续编辑。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const panelFiles = [];
+    const textBoxes = [];
     let selectedIndex = -1;
+    let selectedType = "panel";
     let isDraggingPanel = false;
+    let isDraggingText = false;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
     let lastCanvasWidth = 0;
     let lastCanvasHeight = 0;
     let activeGuides = [];
     let outputDirectoryHandle = null;
+    let cropEditingIndex = -1;
+    let fullscreenZoom = 2;
+    let fullscreenDragging = false;
+    let svgEditingIndex = -1;
+    let svgSelectedElement = null;
     const snapTolerance = 14;
 
     const defaults = {
@@ -1050,8 +1585,23 @@
     const fileList = document.getElementById("fileList");
     const canvas = document.getElementById("figureCanvas");
     const ctx = canvas.getContext("2d");
+    const previewModal = document.getElementById("previewModal");
+    const previewCanvas = document.getElementById("previewCanvas");
+    const previewCtx = previewCanvas.getContext("2d");
+    const cropModal = document.getElementById("cropModal");
+    const cropCanvas = document.getElementById("cropCanvas");
+    const cropCtx = cropCanvas.getContext("2d");
+    const fullscreenModal = document.getElementById("fullscreenModal");
+    const fullscreenCanvas = document.getElementById("fullscreenCanvas");
+    const fullscreenCtx = fullscreenCanvas.getContext("2d");
+    const svgEditorModal = document.getElementById("svgEditorModal");
+    const svgEditorStage = document.getElementById("svgEditorStage");
+    const svgEditorStatus = document.getElementById("svgEditorStatus");
+    const svgElementStats = document.getElementById("svgElementStats");
+    const svgElementList = document.getElementById("svgElementList");
     const outputFolderStatus = document.getElementById("outputFolderStatus");
     const importStatus = document.getElementById("importStatus");
+    const cropInputs = ["cropLeft", "cropRight", "cropTop", "cropBottom"].map(id => document.getElementById(id));
 
     function defaultLabels(count) {
       const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -1082,11 +1632,67 @@
       return file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|tiff?|svg)$/i.test(name);
     }
 
+    function isSvgFile(file) {
+      return file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
+    }
+
+    function textFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(new Error(`无法读取 SVG：${file.name}`));
+        reader.readAsText(file);
+      });
+    }
+
+    function parseSvgInfo(svgText, fallbackWidth, fallbackHeight) {
+      try {
+        const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+        const svg = doc.documentElement;
+        if (!svg || svg.nodeName.toLowerCase() !== "svg" || svg.querySelector("parsererror")) return null;
+
+        const clone = svg.cloneNode(true);
+        clone.querySelectorAll("script, foreignObject, iframe, object, embed").forEach(node => node.remove());
+        clone.querySelectorAll("*").forEach(node => {
+          Array.from(node.attributes).forEach(attr => {
+            const name = attr.name.toLowerCase();
+            const value = attr.value.trim().toLowerCase();
+            if (name.startsWith("on") || value.startsWith("javascript:")) node.removeAttribute(attr.name);
+          });
+        });
+
+        const viewBoxParts = (clone.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+        const width = parseFloat(clone.getAttribute("width")) || fallbackWidth || 1;
+        const height = parseFloat(clone.getAttribute("height")) || fallbackHeight || 1;
+        const viewBox = viewBoxParts.length === 4 && viewBoxParts.every(Number.isFinite)
+          ? { x: viewBoxParts[0], y: viewBoxParts[1], width: viewBoxParts[2], height: viewBoxParts[3] }
+          : { x: 0, y: 0, width, height };
+
+        return {
+          viewBox,
+          attrs: Array.from(clone.attributes).map(attr => `${attr.name}="${xmlEscape(attr.value)}"`).join(" "),
+          content: Array.from(clone.childNodes).map(node => new XMLSerializer().serializeToString(node)).join("")
+        };
+      } catch {
+        return null;
+      }
+    }
+
     function imageFromFile(file) {
       return new Promise((resolve, reject) => {
         const url = URL.createObjectURL(file);
         const image = new Image();
-        image.onload = () => resolve({ file, image, url, box: null });
+        image.onload = async () => {
+          let svgInfo = null;
+          if (isSvgFile(file)) {
+            try {
+              svgInfo = parseSvgInfo(await textFromFile(file), image.naturalWidth, image.naturalHeight);
+            } catch {
+              svgInfo = null;
+            }
+          }
+          resolve({ file, image, url, box: null, crop: { left: 0, right: 0, top: 0, bottom: 0 }, svgInfo });
+        };
         image.onerror = () => {
           URL.revokeObjectURL(url);
           reject(new Error(`无法读取图片：${file.name}`));
@@ -1115,6 +1721,7 @@
 
       panelFiles.push(...loaded);
       selectedIndex = panelFiles.length - 1;
+      selectedType = "panel";
       syncInputsFromFiles();
       resetGridLayout();
       renderFileList();
@@ -1127,6 +1734,7 @@
       if (!panelFiles.length) return;
       if (document.getElementById("inputs")) document.getElementById("inputs").value = panelFiles.map(item => item.file.name).join(" ");
       if (document.getElementById("labels")) document.getElementById("labels").value = defaultLabels(panelFiles.length).join(",");
+      if (document.getElementById("dpi") && document.getElementById("exportDpi")) document.getElementById("dpi").value = document.getElementById("exportDpi").value;
       const recommended = parseGrid("", panelFiles.length);
       if (document.getElementById("layout")) document.getElementById("layout").value = `${recommended.rows}x${recommended.cols}`;
       if (document.getElementById("previewLayout")) document.getElementById("previewLayout").value = `${recommended.rows}x${recommended.cols}`;
@@ -1137,6 +1745,8 @@
       if (to < 0 || to >= panelFiles.length) return;
       const [item] = panelFiles.splice(from, 1);
       panelFiles.splice(to, 0, item);
+      selectedIndex = to;
+      selectedType = "panel";
       syncInputsFromFiles();
       renderFileList();
       renderCanvas();
@@ -1146,6 +1756,7 @@
       const [item] = panelFiles.splice(index, 1);
       if (item) URL.revokeObjectURL(item.url);
       selectedIndex = Math.min(selectedIndex, panelFiles.length - 1);
+      selectedType = selectedIndex >= 0 ? "panel" : "text";
       syncInputsFromFiles();
       resetGridLayout();
       renderFileList();
@@ -1159,14 +1770,21 @@
       }
 
       const labels = defaultLabels(panelFiles.length);
+      const cropSummary = item => {
+        const crop = item.crop || {};
+        const values = [crop.left, crop.right, crop.top, crop.bottom].map(value => Math.round((value || 0) * 100));
+        return values.some(Boolean) ? ` · 裁剪 ${values.join("/")}%` : "";
+      };
+      const svgSummary = item => item.svgInfo?.content ? " · SVG可编辑" : "";
       fileList.innerHTML = panelFiles.map((item, index) => `
-        <div class="file-row">
+        <div class="file-row${selectedType === "panel" && index === selectedIndex ? " selected" : ""}" data-index="${index}">
           <img src="${item.url}" alt="">
           <div class="file-meta">
             <span class="file-name">${item.file.name}</span>
-            <span class="file-label">Panel ${labels[index]} · ${item.image.naturalWidth}×${item.image.naturalHeight}</span>
+            <span class="file-label">Panel ${labels[index]} · ${item.image.naturalWidth}×${item.image.naturalHeight}${cropSummary(item)}${svgSummary(item)}</span>
           </div>
           <div class="row-actions">
+            <button class="icon-btn" type="button" data-action="crop" data-index="${index}" title="裁剪">裁</button>
             <button class="icon-btn" type="button" data-action="up" data-index="${index}" title="上移">↑</button>
             <button class="icon-btn" type="button" data-action="down" data-index="${index}" title="下移">↓</button>
             <button class="icon-btn" type="button" data-action="remove" data-index="${index}" title="删除">×</button>
@@ -1175,13 +1793,28 @@
       `).join("");
     }
 
-    function drawContain(image, x, y, width, height) {
-      const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-      const drawWidth = image.naturalWidth * scale;
-      const drawHeight = image.naturalHeight * scale;
+    function cropSource(item) {
+      const crop = item.crop || { left: 0, right: 0, top: 0, bottom: 0 };
+      const image = item.image;
+      const left = Math.max(0, Math.min(0.95, crop.left || 0));
+      const right = Math.max(0, Math.min(0.95 - left, crop.right || 0));
+      const top = Math.max(0, Math.min(0.95, crop.top || 0));
+      const bottom = Math.max(0, Math.min(0.95 - top, crop.bottom || 0));
+      const sx = Math.round(image.naturalWidth * left);
+      const sy = Math.round(image.naturalHeight * top);
+      const sw = Math.max(1, Math.round(image.naturalWidth * (1 - left - right)));
+      const sh = Math.max(1, Math.round(image.naturalHeight * (1 - top - bottom)));
+      return { sx, sy, sw, sh };
+    }
+
+    function drawContain(targetCtx, item, x, y, width, height) {
+      const { sx, sy, sw, sh } = cropSource(item);
+      const scale = Math.min(width / sw, height / sh);
+      const drawWidth = sw * scale;
+      const drawHeight = sh * scale;
       const dx = x + (width - drawWidth) / 2;
       const dy = y + (height - drawHeight) / 2;
-      ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+      targetCtx.drawImage(item.image, sx, sy, sw, sh, dx, dy, drawWidth, drawHeight);
     }
 
     function controlValue(id, fallback = "") {
@@ -1230,52 +1863,87 @@
       return metrics;
     }
 
-    function drawPanel(item, index, labels, labelSize, labelPosition) {
+    function drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, labelPosition, options = {}) {
       const box = item.box;
       if (!box) return;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(box.x, box.y, box.width, box.height);
-      drawContain(item.image, box.x, box.y, box.width, box.height);
+      targetCtx.fillStyle = "#ffffff";
+      targetCtx.fillRect(box.x, box.y, box.width, box.height);
+      drawContain(targetCtx, item, box.x, box.y, box.width, box.height);
 
-      if (index === selectedIndex && controlValue("arrangeMode", "grid") === "manual") {
-        ctx.save();
-        ctx.strokeStyle = "#146c94";
-        ctx.lineWidth = Math.max(4, Math.round(labelSize / 12));
-        ctx.setLineDash([18, 12]);
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
-        ctx.restore();
+      if (options.showSelection && selectedType === "panel" && index === selectedIndex && controlValue("arrangeMode", "grid") === "manual") {
+        targetCtx.save();
+        targetCtx.strokeStyle = "#146c94";
+        targetCtx.lineWidth = Math.max(4, Math.round(labelSize / 12));
+        targetCtx.setLineDash([18, 12]);
+        targetCtx.strokeRect(box.x, box.y, box.width, box.height);
+        targetCtx.restore();
       }
 
       const label = labels[index];
-      ctx.font = `700 ${labelSize}px Arial, Microsoft YaHei, sans-serif`;
-      const metrics = ctx.measureText(label);
+      targetCtx.font = `700 ${labelSize}px Arial, Microsoft YaHei, sans-serif`;
+      const metrics = targetCtx.measureText(label);
       const labelWidth = metrics.width;
       const labelHeight = labelSize;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
       const [lx, ly] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin);
 
-      ctx.fillStyle = "#111827";
-      ctx.fillText(label, lx, ly);
+      targetCtx.fillStyle = "#111827";
+      targetCtx.fillText(label, lx, ly);
     }
 
-    function drawGuides() {
-      if (!activeGuides.length) return;
-      ctx.save();
-      ctx.strokeStyle = "#0ea5e9";
-      ctx.lineWidth = 4;
-      ctx.setLineDash([16, 10]);
-      activeGuides.forEach(guide => {
-        ctx.beginPath();
-        if (guide.type === "v") {
-          ctx.moveTo(guide.value, 0);
-          ctx.lineTo(guide.value, canvas.height);
-        } else {
-          ctx.moveTo(0, guide.value);
-          ctx.lineTo(canvas.width, guide.value);
-        }
-        ctx.stroke();
+    function textFontValue(textBox) {
+      return `${textBox.size}px "${textBox.font}", "Microsoft YaHei", Arial, sans-serif`;
+    }
+
+    function measureTextBox(targetCtx, textBox) {
+      targetCtx.save();
+      targetCtx.font = textFontValue(textBox);
+      const lines = String(textBox.text || "").split(/\r?\n/);
+      const width = Math.max(...lines.map(line => targetCtx.measureText(line || " ").width), 1);
+      const lineHeight = Math.round(textBox.size * 1.25);
+      targetCtx.restore();
+      return { width, height: Math.max(lineHeight, lines.length * lineHeight), lineHeight, lines };
+    }
+
+    function drawTextBox(targetCtx, textBox, index, options = {}) {
+      const metrics = measureTextBox(targetCtx, textBox);
+      targetCtx.save();
+      targetCtx.font = textFontValue(textBox);
+      targetCtx.fillStyle = textBox.color || "#111827";
+      targetCtx.textAlign = "left";
+      targetCtx.textBaseline = "top";
+      metrics.lines.forEach((line, lineIndex) => {
+        targetCtx.fillText(line || " ", textBox.x, textBox.y + lineIndex * metrics.lineHeight);
       });
-      ctx.restore();
+
+      if (options.showSelection && selectedType === "text" && index === selectedIndex && controlValue("arrangeMode", "grid") === "manual") {
+        const pad = Math.max(6, Math.round(textBox.size * 0.18));
+        targetCtx.strokeStyle = "#ef476f";
+        targetCtx.lineWidth = Math.max(3, Math.round(textBox.size / 18));
+        targetCtx.setLineDash([12, 8]);
+        targetCtx.strokeRect(textBox.x - pad, textBox.y - pad, metrics.width + pad * 2, metrics.height + pad * 2);
+      }
+      targetCtx.restore();
+    }
+
+    function drawGuides(targetCtx, targetCanvas) {
+      if (!activeGuides.length) return;
+      targetCtx.save();
+      targetCtx.strokeStyle = "#0ea5e9";
+      targetCtx.lineWidth = 4;
+      targetCtx.setLineDash([16, 10]);
+      activeGuides.forEach(guide => {
+        targetCtx.beginPath();
+        if (guide.type === "v") {
+          targetCtx.moveTo(guide.value, 0);
+          targetCtx.lineTo(guide.value, targetCanvas.height);
+        } else {
+          targetCtx.moveTo(0, guide.value);
+          targetCtx.lineTo(targetCanvas.width, guide.value);
+        }
+        targetCtx.stroke();
+      });
+      targetCtx.restore();
     }
 
     function guideCandidates(axis, movingIndex) {
@@ -1347,45 +2015,57 @@
       return [x + margin, y + margin];
     }
 
-    function renderCanvas() {
+    function renderFigure(targetCanvas = canvas, targetCtx = ctx, options = {}) {
       const count = panelFiles.length;
       const arrangeMode = controlValue("arrangeMode", "grid");
       const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
       const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
       const labelPosition = controlValue("previewLabelPosition", "topleft");
 
-      canvas.width = metrics.targetWidth;
-      canvas.height = metrics.targetHeight;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (!options.preserveCanvasSize) {
+        targetCanvas.width = metrics.targetWidth;
+        targetCanvas.height = metrics.targetHeight;
+      }
+      targetCtx.fillStyle = "#ffffff";
+      targetCtx.fillRect(0, 0, options.preserveCanvasSize ? metrics.targetWidth : targetCanvas.width, options.preserveCanvasSize ? metrics.targetHeight : targetCanvas.height);
 
-      if (!count) {
-        ctx.fillStyle = "#64748b";
-        ctx.font = "42px Microsoft YaHei, Segoe UI, Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("拖入图片后在这里预览组图", canvas.width / 2, canvas.height / 2);
+      if (!count && !textBoxes.length) {
+        targetCtx.fillStyle = "#64748b";
+        targetCtx.font = "42px Microsoft YaHei, Segoe UI, Arial";
+        targetCtx.textAlign = "center";
+        targetCtx.textBaseline = "middle";
+        targetCtx.fillText("拖入图片后在这里预览组图", targetCanvas.width / 2, targetCanvas.height / 2);
         return;
       }
 
       const labels = defaultLabels(count);
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
+      targetCtx.textAlign = "left";
+      targetCtx.textBaseline = "top";
 
-      if (arrangeMode === "grid") {
+      if (count && arrangeMode === "grid") {
         resetGridLayout();
       }
 
-      panelFiles.forEach((item, index) => drawPanel(item, index, labels, labelSize, labelPosition));
-      drawGuides();
+      panelFiles.forEach((item, index) => drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, labelPosition, {
+        showSelection: options.showSelection !== false
+      }));
+      textBoxes.forEach((textBox, index) => drawTextBox(targetCtx, textBox, index, {
+        showSelection: options.showSelection !== false
+      }));
+      if (options.showGuides !== false) drawGuides(targetCtx, targetCanvas);
     }
 
-    function canvasPoint(event) {
-      const rect = canvas.getBoundingClientRect();
+    function renderCanvas() {
+      renderFigure(canvas, ctx, { showSelection: true, showGuides: true });
+    }
+
+    function canvasPoint(event, sourceCanvas = canvas) {
+      const rect = sourceCanvas.getBoundingClientRect();
       const clientX = event.clientX ?? event.touches?.[0]?.clientX;
       const clientY = event.clientY ?? event.touches?.[0]?.clientY;
       return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
+        x: (clientX - rect.left) * (sourceCanvas.width / rect.width),
+        y: (clientY - rect.top) * (sourceCanvas.height / rect.height)
       };
     }
 
@@ -1400,10 +2080,43 @@
       return -1;
     }
 
+    function hitTestText(point) {
+      for (let index = textBoxes.length - 1; index >= 0; index -= 1) {
+        const textBox = textBoxes[index];
+        const metrics = measureTextBox(ctx, textBox);
+        const pad = Math.max(8, Math.round(textBox.size * 0.18));
+        if (
+          point.x >= textBox.x - pad &&
+          point.x <= textBox.x + metrics.width + pad &&
+          point.y >= textBox.y - pad &&
+          point.y <= textBox.y + metrics.height + pad
+        ) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
     function startPanelDrag(event) {
       if (controlValue("arrangeMode", "grid") !== "manual") return;
       const point = canvasPoint(event);
+      const textIndex = hitTestText(point);
+      if (textIndex >= 0) {
+        const textBox = textBoxes[textIndex];
+        selectedType = "text";
+        selectedIndex = textIndex;
+        isDraggingText = true;
+        dragOffsetX = point.x - textBox.x;
+        dragOffsetY = point.y - textBox.y;
+        canvas.classList.add("dragging-canvas");
+        syncTextControlsFromSelection();
+        event.preventDefault();
+        renderCanvas();
+        return;
+      }
+
       const index = hitTest(point);
+      selectedType = "panel";
       selectedIndex = index;
       if (index >= 0) {
         const box = panelFiles[index].box;
@@ -1417,8 +2130,16 @@
     }
 
     function movePanelDrag(event) {
-      if (!isDraggingPanel || selectedIndex < 0) return;
       const point = canvasPoint(event);
+      if (isDraggingText && selectedType === "text" && selectedIndex >= 0) {
+        const textBox = textBoxes[selectedIndex];
+        textBox.x = point.x - dragOffsetX;
+        textBox.y = point.y - dragOffsetY;
+        event.preventDefault();
+        renderCanvas();
+        return;
+      }
+      if (!isDraggingPanel || selectedType !== "panel" || selectedIndex < 0) return;
       const box = panelFiles[selectedIndex].box;
       box.x = point.x - dragOffsetX;
       box.y = point.y - dragOffsetY;
@@ -1429,13 +2150,14 @@
 
     function endPanelDrag() {
       isDraggingPanel = false;
+      isDraggingText = false;
       activeGuides = [];
       canvas.classList.remove("dragging-canvas");
       renderCanvas();
     }
 
     function scaleSelected(factor) {
-      if (selectedIndex < 0 || !panelFiles[selectedIndex]?.box) return;
+      if (selectedType !== "panel" || selectedIndex < 0 || !panelFiles[selectedIndex]?.box) return;
       const box = panelFiles[selectedIndex].box;
       const centerX = box.x + box.width / 2;
       const centerY = box.y + box.height / 2;
@@ -1446,8 +2168,113 @@
       renderCanvas();
     }
 
+    function renderFullscreenEditor() {
+      const metrics = getLayoutMetrics();
+      fullscreenCanvas.width = Math.round(metrics.targetWidth * fullscreenZoom);
+      fullscreenCanvas.height = Math.round(metrics.targetHeight * fullscreenZoom);
+      fullscreenCanvas.style.width = `${fullscreenCanvas.width}px`;
+      fullscreenCanvas.style.height = `${fullscreenCanvas.height}px`;
+      fullscreenCtx.save();
+      fullscreenCtx.scale(fullscreenZoom, fullscreenZoom);
+      renderFigure(fullscreenCanvas, fullscreenCtx, { showSelection: true, showGuides: false, preserveCanvasSize: true });
+      fullscreenCtx.restore();
+    }
+
+    function openFullscreenEditor() {
+      if (!panelFiles.length && !textBoxes.length) return;
+      if (document.getElementById("arrangeMode")) document.getElementById("arrangeMode").value = "manual";
+      document.getElementById("fullscreenTitle").textContent = "全屏放大编辑";
+      fullscreenModal.hidden = false;
+      renderFullscreenEditor();
+      renderCanvas();
+    }
+
+    function closeFullscreenEditor() {
+      fullscreenModal.hidden = true;
+      fullscreenDragging = false;
+      fullscreenCanvas.classList.remove("dragging-canvas");
+      renderFileList();
+      renderCanvas();
+    }
+
+    function fullscreenPoint(event) {
+      const point = canvasPoint(event, fullscreenCanvas);
+      return { x: point.x / fullscreenZoom, y: point.y / fullscreenZoom };
+    }
+
+    function scaleSelectedInFullscreen(factor) {
+      scaleSelected(factor);
+      renderFullscreenEditor();
+    }
+
+    function zoomFullscreen(factor) {
+      fullscreenZoom = Math.max(1, Math.min(5, fullscreenZoom * factor));
+      renderFullscreenEditor();
+    }
+
+    function startFullscreenDrag(event) {
+      const point = fullscreenPoint(event);
+      const textIndex = hitTestText(point);
+      if (textIndex >= 0) {
+        const textBox = textBoxes[textIndex];
+        selectedType = "text";
+        selectedIndex = textIndex;
+        fullscreenDragging = true;
+        dragOffsetX = point.x - textBox.x;
+        dragOffsetY = point.y - textBox.y;
+        syncTextControlsFromSelection();
+        fullscreenCanvas.classList.add("dragging-canvas");
+        event.preventDefault();
+        renderFullscreenEditor();
+        return;
+      }
+
+      const index = hitTest(point);
+      selectedType = "panel";
+      selectedIndex = index;
+      renderFileList();
+      if (index < 0) {
+        renderFullscreenEditor();
+        return;
+      }
+      const box = panelFiles[index].box;
+      fullscreenDragging = true;
+      dragOffsetX = point.x - box.x;
+      dragOffsetY = point.y - box.y;
+      fullscreenCanvas.classList.add("dragging-canvas");
+      event.preventDefault();
+      renderFullscreenEditor();
+    }
+
+    function moveFullscreenDrag(event) {
+      if (!fullscreenDragging || selectedIndex < 0) return;
+      const point = fullscreenPoint(event);
+      if (selectedType === "text") {
+        const textBox = textBoxes[selectedIndex];
+        if (!textBox) return;
+        textBox.x = point.x - dragOffsetX;
+        textBox.y = point.y - dragOffsetY;
+      } else {
+        const box = panelFiles[selectedIndex]?.box;
+        if (!box) return;
+        box.x = point.x - dragOffsetX;
+        box.y = point.y - dragOffsetY;
+      }
+      event.preventDefault();
+      renderFullscreenEditor();
+      renderCanvas();
+    }
+
+    function endFullscreenDrag() {
+      fullscreenDragging = false;
+      fullscreenCanvas.classList.remove("dragging-canvas");
+      renderFileList();
+      renderCanvas();
+      renderFullscreenEditor();
+    }
+
     function moveLayer(direction) {
-      if (selectedIndex < 0) return;
+      if (selectedType !== "panel" || selectedIndex < 0) return;
       const nextIndex = selectedIndex + direction;
       if (nextIndex < 0 || nextIndex >= panelFiles.length) return;
       const [item] = panelFiles.splice(selectedIndex, 1);
@@ -1458,21 +2285,619 @@
       renderCanvas();
     }
 
-    function canvasBlob() {
-      return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+    function selectedTextBox() {
+      return selectedType === "text" && selectedIndex >= 0 ? textBoxes[selectedIndex] : null;
     }
 
-    function outputPngName() {
+    function textControlsValue() {
+      return {
+        text: controlValue("textContentInput", "请输入文字").trim() || "请输入文字",
+        font: controlValue("textFont", "Microsoft YaHei"),
+        size: Math.max(12, Number(controlValue("textSize", "48")) || 48),
+        color: controlValue("textColor", "#111827")
+      };
+    }
+
+    function syncTextControlsFromSelection() {
+      const textBox = selectedTextBox();
+      if (!textBox) return;
+      document.getElementById("textContentInput").value = textBox.text;
+      document.getElementById("textFont").value = textBox.font;
+      document.getElementById("textSize").value = textBox.size;
+      document.getElementById("textColor").value = textBox.color;
+    }
+
+    function addTextBox() {
+      const metrics = getLayoutMetrics();
+      const value = textControlsValue();
+      textBoxes.push({
+        ...value,
+        x: metrics.outer,
+        y: metrics.outer
+      });
+      selectedType = "text";
+      selectedIndex = textBoxes.length - 1;
+      if (document.getElementById("arrangeMode")) document.getElementById("arrangeMode").value = "manual";
+      renderFileList();
+      renderCanvas();
+    }
+
+    function updateSelectedTextBox() {
+      const textBox = selectedTextBox();
+      if (!textBox) return;
+      Object.assign(textBox, textControlsValue());
+      renderCanvas();
+    }
+
+    function deleteSelectedTextBox() {
+      if (!selectedTextBox()) return;
+      textBoxes.splice(selectedIndex, 1);
+      selectedIndex = panelFiles.length ? Math.min(0, panelFiles.length - 1) : -1;
+      selectedType = panelFiles.length ? "panel" : "text";
+      renderFileList();
+      renderCanvas();
+    }
+
+    function syncCropOutputs() {
+      cropInputs.forEach(input => {
+        const output = document.getElementById(`${input.id}Value`);
+        if (output) output.textContent = `${input.value}%`;
+      });
+    }
+
+    function clampCropInputs(changedInput) {
+      const horizontal = [document.getElementById("cropLeft"), document.getElementById("cropRight")];
+      const vertical = [document.getElementById("cropTop"), document.getElementById("cropBottom")];
+      [horizontal, vertical].forEach(pair => {
+        const total = pair.reduce((sum, input) => sum + Number(input.value), 0);
+        if (total > 95) {
+          const other = pair.find(input => input !== changedInput) || pair[1];
+          changedInput.value = Math.max(0, 95 - Number(other.value));
+        }
+      });
+      syncCropOutputs();
+    }
+
+    function cropFromInputs() {
+      return {
+        left: Number(document.getElementById("cropLeft").value) / 100,
+        right: Number(document.getElementById("cropRight").value) / 100,
+        top: Number(document.getElementById("cropTop").value) / 100,
+        bottom: Number(document.getElementById("cropBottom").value) / 100
+      };
+    }
+
+    function renderCropCanvas() {
+      const item = panelFiles[cropEditingIndex];
+      if (!item) return;
+      const previousCrop = item.crop;
+      item.crop = cropFromInputs();
+      const { sx, sy, sw, sh } = cropSource(item);
+      item.crop = previousCrop;
+
+      const maxWidth = 900;
+      const maxHeight = 650;
+      const scale = Math.min(maxWidth / item.image.naturalWidth, maxHeight / item.image.naturalHeight, 1);
+      cropCanvas.width = Math.max(1, Math.round(item.image.naturalWidth * scale));
+      cropCanvas.height = Math.max(1, Math.round(item.image.naturalHeight * scale));
+      cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+      cropCtx.drawImage(item.image, 0, 0, cropCanvas.width, cropCanvas.height);
+
+      const rx = sx * scale;
+      const ry = sy * scale;
+      const rw = sw * scale;
+      const rh = sh * scale;
+      cropCtx.save();
+      cropCtx.fillStyle = "rgba(15, 23, 42, 0.5)";
+      cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
+      cropCtx.clearRect(rx, ry, rw, rh);
+      cropCtx.drawImage(item.image, sx, sy, sw, sh, rx, ry, rw, rh);
+      cropCtx.strokeStyle = "#0ea5e9";
+      cropCtx.lineWidth = 3;
+      cropCtx.setLineDash([10, 7]);
+      cropCtx.strokeRect(rx, ry, rw, rh);
+      cropCtx.restore();
+    }
+
+    function openCropModal(index) {
+      const item = panelFiles[index];
+      if (!item) return;
+      cropEditingIndex = index;
+      selectedIndex = index;
+      selectedType = "panel";
+      const crop = item.crop || { left: 0, right: 0, top: 0, bottom: 0 };
+      document.getElementById("cropLeft").value = Math.round((crop.left || 0) * 100);
+      document.getElementById("cropRight").value = Math.round((crop.right || 0) * 100);
+      document.getElementById("cropTop").value = Math.round((crop.top || 0) * 100);
+      document.getElementById("cropBottom").value = Math.round((crop.bottom || 0) * 100);
+      document.getElementById("cropTitle").textContent = `裁剪图片：${item.file.name}`;
+      syncCropOutputs();
+      renderCropCanvas();
+      cropModal.hidden = false;
+      renderFileList();
+      renderCanvas();
+    }
+
+    function closeCropModal() {
+      cropModal.hidden = true;
+      cropEditingIndex = -1;
+    }
+
+    function applyCrop() {
+      const item = panelFiles[cropEditingIndex];
+      if (!item) return;
+      item.crop = cropFromInputs();
+      closeCropModal();
+      renderFileList();
+      renderCanvas();
+    }
+
+    function resetCrop() {
+      cropInputs.forEach(input => { input.value = 0; });
+      syncCropOutputs();
+      renderCropCanvas();
+    }
+
+    function editableSvgItem() {
+      return selectedType === "panel" && selectedIndex >= 0 ? panelFiles[selectedIndex] : null;
+    }
+
+    function serializeSvgEditor() {
+      const svg = svgEditorStage.querySelector("svg");
+      if (!svg) return null;
+      return {
+        attrs: Array.from(svg.attributes).map(attr => `${attr.name}="${xmlEscape(attr.value)}"`).join(" "),
+        content: Array.from(svg.childNodes).map(node => new XMLSerializer().serializeToString(node)).join("")
+      };
+    }
+
+    function openSvgEditor() {
+      const item = editableSvgItem();
+      if (!item?.svgInfo?.content) {
+        importStatus.textContent = "SVG 内部编辑：请先选中一个导入的 SVG 图片。";
+        return;
+      }
+      svgEditingIndex = selectedIndex;
+      svgSelectedElement = null;
+      const source = item.svgInfo.viewBox;
+      svgEditorStage.innerHTML = `<svg ${item.svgInfo.attrs || ""} viewBox="${source.x} ${source.y} ${source.width} ${source.height}" width="${Math.max(900, source.width)}" height="${Math.max(520, source.height)}">${item.svgInfo.content}</svg>`;
+      svgEditorStatus.textContent = "点击左侧 SVG 内部元素后编辑属性。";
+      document.getElementById("svgEditorTitle").textContent = `SVG 内部编辑：${item.file.name}`;
+      refreshSvgElementList();
+      svgEditorModal.hidden = false;
+    }
+
+    function closeSvgEditor() {
+      svgEditorModal.hidden = true;
+      svgEditingIndex = -1;
+      svgSelectedElement = null;
+      svgEditorStage.innerHTML = "";
+      svgElementList.innerHTML = "";
+    }
+
+    function colorToInput(value, fallback = "#000000") {
+      const trimmed = String(value || "").trim();
+      if (/^#[0-9a-f]{6}$/i.test(trimmed)) return trimmed;
+      if (/^#[0-9a-f]{3}$/i.test(trimmed)) {
+        return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
+      }
+      return fallback;
+    }
+
+    function isGlyphUse(element) {
+      if (!element || element.tagName?.toLowerCase() !== "use") return false;
+      const href = element.getAttribute("href") || element.getAttribute("xlink:href") || "";
+      return href.startsWith("#");
+    }
+
+    function isTextLikeGroup(element) {
+      if (!element || element.tagName?.toLowerCase() !== "g") return false;
+      const id = (element.getAttribute("id") || "").toLowerCase();
+      const label = (element.getAttribute("aria-label") || element.getAttribute("data-name") || "").toLowerCase();
+      const uses = element.querySelectorAll(":scope > use, :scope > g use").length;
+      const textNodes = element.querySelectorAll("text,tspan").length;
+      return textNodes > 0 || uses >= 2 || id.includes("text") || id.includes("label") || label.includes("text") || label.includes("label");
+    }
+
+    function normalizeSvgSelection(element) {
+      if (!element || element.tagName?.toLowerCase() === "svg") return element;
+      const textElement = element.closest("text,tspan");
+      if (textElement) return textElement;
+      const textGroup = element.closest("g");
+      if (textGroup && isTextLikeGroup(textGroup)) return textGroup;
+      if (isGlyphUse(element)) {
+        const group = element.closest("g");
+        if (group) return group;
+      }
+      return element;
+    }
+
+    function svgElementKind(element) {
+      if (isTextLikeGroup(element)) return "文字组";
+      const tag = element.tagName.toLowerCase();
+      if (tag === "text" || tag === "tspan") return "文字";
+      if (tag === "image") return "图片";
+      if (tag === "g") return "分组";
+      return tag;
+    }
+
+    function svgEditableElements() {
+      const svg = svgEditorStage.querySelector("svg");
+      if (!svg) return [];
+      const selector = "g,path,rect,circle,ellipse,line,polyline,polygon,text,tspan,image,use";
+      const seen = new Set();
+      return Array.from(svg.querySelectorAll(selector))
+        .filter(node => !node.closest("defs,clipPath,mask,pattern,symbol"))
+        .map(normalizeSvgSelection)
+        .filter(node => {
+          if (!node || node.tagName?.toLowerCase() === "svg") return false;
+          if (isGlyphUse(node)) return false;
+          if (seen.has(node)) return false;
+          seen.add(node);
+          return true;
+        });
+    }
+
+    function svgElementName(element, index) {
+      const tag = svgElementKind(element);
+      const text = (element.textContent || "").trim().replace(/\s+/g, " ").slice(0, 18);
+      const id = element.getAttribute("id");
+      if (id) return `${index + 1}. ${tag} #${id}`;
+      if (text) return `${index + 1}. ${tag} "${text}"`;
+      return `${index + 1}. ${tag}`;
+    }
+
+    function refreshSvgElementList() {
+      const elements = svgEditableElements();
+      const counts = elements.reduce((acc, element) => {
+        const tag = svgElementKind(element);
+        acc[tag] = (acc[tag] || 0) + 1;
+        return acc;
+      }, {});
+      svgElementStats.textContent = `识别到 ${elements.length} 个可编辑元素：${Object.entries(counts).map(([tag, count]) => `${tag} ${count}`).join("，") || "无"}`;
+      elements.forEach((element, index) => element.dataset.svgEditId = String(index));
+      svgElementList.innerHTML = elements.map((element, index) => `<button type="button" data-svg-edit-id="${index}">${xmlEscape(svgElementName(element, index))}</button>`).join("");
+      if (svgSelectedElement?.dataset?.svgEditId) {
+        const button = svgElementList.querySelector(`[data-svg-edit-id="${svgSelectedElement.dataset.svgEditId}"]`);
+        if (button) button.classList.add("active");
+      }
+    }
+
+    function readNumberAttr(element, name, fallback = 0) {
+      const value = parseFloat(element.getAttribute(name));
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function elementXY(element) {
+      const tag = element.tagName.toLowerCase();
+      if (tag === "circle" || tag === "ellipse") return { xAttr: "cx", yAttr: "cy", x: readNumberAttr(element, "cx"), y: readNumberAttr(element, "cy") };
+      if (tag === "line") return { xAttr: "x1", yAttr: "y1", x: readNumberAttr(element, "x1"), y: readNumberAttr(element, "y1") };
+      return { xAttr: "x", yAttr: "y", x: readNumberAttr(element, "x"), y: readNumberAttr(element, "y") };
+    }
+
+    function selectSvgElement(element) {
+      element = normalizeSvgSelection(element);
+      if (!element || element.tagName?.toLowerCase() === "svg") return;
+      svgEditorStage.querySelectorAll(".svg-edit-selected").forEach(node => node.classList.remove("svg-edit-selected"));
+      svgSelectedElement = element;
+      svgSelectedElement.classList.add("svg-edit-selected");
+      const tag = svgSelectedElement.tagName.toLowerCase();
+      const kind = svgElementKind(svgSelectedElement);
+      svgEditorStatus.textContent = kind === "文字组" ? "已选中文字组：可移动、改色或删除；若原文字被转成字形，不能直接改字，可用“添加文本”重新输入。" : `已选中：${kind}`;
+      document.getElementById("svgTextValue").value = tag === "text" || tag === "tspan" ? svgSelectedElement.textContent : "";
+      document.getElementById("svgFontSize").value = parseFloat(svgSelectedElement.getAttribute("font-size")) || 16;
+      document.getElementById("svgFillColor").value = colorToInput(svgSelectedElement.getAttribute("fill"), "#000000");
+      document.getElementById("svgStrokeColor").value = colorToInput(svgSelectedElement.getAttribute("stroke"), "#000000");
+      document.getElementById("svgStrokeWidth").value = parseFloat(svgSelectedElement.getAttribute("stroke-width")) || 0;
+      document.getElementById("svgOpacity").value = parseFloat(svgSelectedElement.getAttribute("opacity")) || 1;
+      const xy = elementXY(svgSelectedElement);
+      document.getElementById("svgElementX").value = Math.round(xy.x * 100) / 100;
+      document.getElementById("svgElementY").value = Math.round(xy.y * 100) / 100;
+      svgElementList.querySelectorAll("button").forEach(button => button.classList.toggle("active", button.dataset.svgEditId === svgSelectedElement.dataset.svgEditId));
+    }
+
+    function updateSvgElementAttribute() {
+      if (!svgSelectedElement) return;
+      const tag = svgSelectedElement.tagName.toLowerCase();
+      if (tag === "text" || tag === "tspan") svgSelectedElement.textContent = document.getElementById("svgTextValue").value;
+      svgSelectedElement.setAttribute("font-size", document.getElementById("svgFontSize").value);
+      svgSelectedElement.setAttribute("fill", document.getElementById("svgFillColor").value);
+      svgSelectedElement.setAttribute("stroke", document.getElementById("svgStrokeColor").value);
+      svgSelectedElement.setAttribute("stroke-width", document.getElementById("svgStrokeWidth").value);
+      svgSelectedElement.setAttribute("opacity", document.getElementById("svgOpacity").value);
+      const xy = elementXY(svgSelectedElement);
+      if (document.activeElement === document.getElementById("svgElementX")) svgSelectedElement.setAttribute(xy.xAttr, document.getElementById("svgElementX").value);
+      if (document.activeElement === document.getElementById("svgElementY")) svgSelectedElement.setAttribute(xy.yAttr, document.getElementById("svgElementY").value);
+      refreshSvgElementList();
+    }
+
+    function nudgeSvgElement(dx, dy) {
+      if (!svgSelectedElement) return;
+      const current = svgSelectedElement.getAttribute("transform") || "";
+      svgSelectedElement.setAttribute("transform", `${current} translate(${dx} ${dy})`.trim());
+    }
+
+    function deleteSvgElement() {
+      if (!svgSelectedElement) return;
+      const next = svgSelectedElement.parentElement;
+      svgSelectedElement.remove();
+      svgSelectedElement = null;
+      if (next && next !== svgEditorStage.querySelector("svg")) selectSvgElement(next);
+      else svgEditorStatus.textContent = "元素已删除。";
+      refreshSvgElementList();
+    }
+
+    function addSvgTextElement() {
+      const svg = svgEditorStage.querySelector("svg");
+      if (!svg) return;
+      const source = svg.viewBox?.baseVal;
+      const x = source ? source.x + source.width * 0.08 : 40;
+      const y = source ? source.y + source.height * 0.12 : 60;
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", Math.round(x));
+      text.setAttribute("y", Math.round(y));
+      text.setAttribute("font-size", document.getElementById("svgNewTextSize").value || "24");
+      text.setAttribute("fill", document.getElementById("svgFillColor").value || "#000000");
+      text.textContent = document.getElementById("svgNewTextValue").value || "新文本";
+      svg.appendChild(text);
+      refreshSvgElementList();
+      selectSvgElement(text);
+    }
+
+    function clearSvgTextElement() {
+      if (!svgSelectedElement) return;
+      const tag = svgSelectedElement.tagName.toLowerCase();
+      if (tag !== "text" && tag !== "tspan") {
+        svgEditorStatus.textContent = "清空文字：请先选中真正的 text/tspan 文本元素。字形文字组可删除后用“添加文本”重建。";
+        return;
+      }
+      svgSelectedElement.textContent = "";
+      document.getElementById("svgTextValue").value = "";
+      refreshSvgElementList();
+    }
+
+    function applySvgEditor() {
+      const item = panelFiles[svgEditingIndex];
+      const serialized = serializeSvgEditor();
+      if (!item || !serialized) return;
+      item.svgInfo.attrs = serialized.attrs;
+      item.svgInfo.content = serialized.content;
+      const source = item.svgInfo.viewBox;
+      const svgText = `<svg xmlns="http://www.w3.org/2000/svg" ${item.svgInfo.attrs || ""} viewBox="${source.x} ${source.y} ${source.width} ${source.height}">${item.svgInfo.content}</svg>`;
+      const nextUrl = URL.createObjectURL(new Blob([svgText], { type: "image/svg+xml" }));
+      const nextImage = new Image();
+      nextImage.onload = () => {
+        URL.revokeObjectURL(item.url);
+        item.url = nextUrl;
+        item.image = nextImage;
+        closeSvgEditor();
+        renderFileList();
+        renderCanvas();
+        importStatus.textContent = "SVG 内部编辑：修改已应用。导出 SVG 时会保留这些可编辑元素。";
+      };
+      nextImage.onerror = () => {
+        URL.revokeObjectURL(nextUrl);
+        closeSvgEditor();
+        renderCanvas();
+        importStatus.textContent = "SVG 内部编辑：修改已应用，但浏览器预览刷新失败；导出 SVG 仍会使用修改后的元素。";
+      };
+      nextImage.src = nextUrl;
+    }
+
+    function openPreviewModal() {
+      renderFigure(previewCanvas, previewCtx, { showSelection: false, showGuides: false });
+      previewModal.hidden = false;
+    }
+
+    function closePreviewModal() {
+      previewModal.hidden = true;
+    }
+
+    function canvasBlob(sourceCanvas = canvas) {
+      const format = controlValue("exportFormat", "png");
+      const mimeType = format === "jpeg" ? "image/jpeg" : format === "webp" ? "image/webp" : "image/png";
+      const quality = format === "jpeg" || format === "webp" ? 0.95 : undefined;
+      return new Promise(resolve => sourceCanvas.toBlob(resolve, mimeType, quality));
+    }
+
+    function makeCrcTable() {
+      const table = new Uint32Array(256);
+      for (let n = 0; n < 256; n += 1) {
+        let c = n;
+        for (let k = 0; k < 8; k += 1) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        table[n] = c >>> 0;
+      }
+      return table;
+    }
+
+    const crcTable = makeCrcTable();
+
+    function crc32(bytes) {
+      let c = 0xffffffff;
+      for (let i = 0; i < bytes.length; i += 1) c = crcTable[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+      return (c ^ 0xffffffff) >>> 0;
+    }
+
+    function pngChunk(type, data) {
+      const typeBytes = new TextEncoder().encode(type);
+      const chunk = new Uint8Array(12 + data.length);
+      const view = new DataView(chunk.buffer);
+      view.setUint32(0, data.length);
+      chunk.set(typeBytes, 4);
+      chunk.set(data, 8);
+      view.setUint32(8 + data.length, crc32(chunk.slice(4, 8 + data.length)));
+      return chunk;
+    }
+
+    async function pngWithDpi(blob, dpi) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const pixelsPerMeter = Math.round(Number(dpi) / 0.0254);
+      const physData = new Uint8Array(9);
+      const physView = new DataView(physData.buffer);
+      physView.setUint32(0, pixelsPerMeter);
+      physView.setUint32(4, pixelsPerMeter);
+      physData[8] = 1;
+      const physChunk = pngChunk("pHYs", physData);
+
+      const signatureLength = 8;
+      let offset = signatureLength;
+      const parts = [bytes.slice(0, signatureLength)];
+      let inserted = false;
+      while (offset < bytes.length) {
+        const view = new DataView(bytes.buffer, bytes.byteOffset + offset);
+        const length = view.getUint32(0);
+        const type = String.fromCharCode(bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7]);
+        const chunkEnd = offset + 12 + length;
+        if (type === "pHYs") {
+          if (!inserted) {
+            parts.push(physChunk);
+            inserted = true;
+          }
+        } else {
+          if (!inserted && type === "IDAT") {
+            parts.push(physChunk);
+            inserted = true;
+          }
+          parts.push(bytes.slice(offset, chunkEnd));
+        }
+        offset = chunkEnd;
+      }
+      if (!inserted) parts.splice(1, 0, physChunk);
+      return new Blob(parts, { type: "image/png" });
+    }
+
+    function imageFileDataUrl(item) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`无法读取图片：${item.file.name}`));
+        reader.readAsDataURL(item.file);
+      });
+    }
+
+    function xmlEscape(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function svgContain(item, box) {
+      const { sx, sy, sw, sh } = cropSource(item);
+      const scale = Math.min(box.width / sw, box.height / sh);
+      const drawWidth = sw * scale;
+      const drawHeight = sh * scale;
+      return {
+        sx,
+        sy,
+        sw,
+        sh,
+        x: box.x + (box.width - drawWidth) / 2,
+        y: box.y + (box.height - drawHeight) / 2,
+        width: drawWidth,
+        height: drawHeight
+      };
+    }
+
+    function svgLabel(label, box, labelSize, labelPosition) {
+      const labelWidth = label.length * labelSize * 0.62;
+      const labelHeight = labelSize;
+      const margin = Math.max(16, Math.round(labelSize * 0.3));
+      const [x, y] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin);
+      return `<text x="${x}" y="${y}" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${labelSize}" font-weight="700" fill="#111827">${xmlEscape(label)}</text>`;
+    }
+
+    function svgPanelContent(item, draw, dataUrl, index) {
+      if (item.svgInfo?.content) {
+        const source = item.svgInfo.viewBox;
+        const cropX = source.x + (draw.sx / item.image.naturalWidth) * source.width;
+        const cropY = source.y + (draw.sy / item.image.naturalHeight) * source.height;
+        const cropWidth = (draw.sw / item.image.naturalWidth) * source.width;
+        const cropHeight = (draw.sh / item.image.naturalHeight) * source.height;
+        const scaleX = draw.width / cropWidth;
+        const scaleY = draw.height / cropHeight;
+        const translateX = draw.x - cropX * scaleX;
+        const translateY = draw.y - cropY * scaleY;
+        const clipId = `panel-clip-${index}`;
+        return [
+          `<clipPath id="${clipId}"><rect x="${draw.x}" y="${draw.y}" width="${draw.width}" height="${draw.height}"/></clipPath>`,
+          `<g clip-path="url(#${clipId})" transform="translate(${translateX} ${translateY}) scale(${scaleX} ${scaleY})">`,
+          item.svgInfo.content,
+          `</g>`
+        ].join("");
+      }
+
+      return [
+        `<svg x="${draw.x}" y="${draw.y}" width="${draw.width}" height="${draw.height}" viewBox="${draw.sx} ${draw.sy} ${draw.sw} ${draw.sh}" preserveAspectRatio="none" overflow="hidden">`,
+        `<image href="${dataUrl}" x="0" y="0" width="${item.image.naturalWidth}" height="${item.image.naturalHeight}"/>`,
+        `</svg>`
+      ].join("");
+    }
+
+    function svgTextBox(textBox) {
+      const lines = String(textBox.text || "").split(/\r?\n/);
+      const lineHeight = Math.round(textBox.size * 1.25);
+      const tspans = lines.map((line, index) => {
+        const dy = index === 0 ? 0 : lineHeight;
+        return `<tspan x="${textBox.x}" dy="${dy}">${xmlEscape(line || " ")}</tspan>`;
+      }).join("");
+      return `<text x="${textBox.x}" y="${textBox.y}" font-family="${xmlEscape(textBox.font)}, Microsoft YaHei, Arial, sans-serif" font-size="${textBox.size}" fill="${xmlEscape(textBox.color || "#111827")}">${tspans}</text>`;
+    }
+
+    async function exportSvgBlob() {
+      const arrangeMode = controlValue("arrangeMode", "grid");
+      const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
+      if (panelFiles.length && arrangeMode === "grid") resetGridLayout();
+      const labels = defaultLabels(panelFiles.length);
+      const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
+      const labelPosition = controlValue("previewLabelPosition", "topleft");
+      const imageUrls = await Promise.all(panelFiles.map(imageFileDataUrl));
+      const imageNodes = panelFiles.map((item, index) => {
+        const box = item.box;
+        if (!box) return "";
+        const draw = svgContain(item, box);
+        return [
+          `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" fill="#ffffff"/>`,
+          svgPanelContent(item, draw, imageUrls[index], index),
+          svgLabel(labels[index], box, labelSize, labelPosition)
+        ].join("");
+      }).join("");
+      const textNodes = textBoxes.map(svgTextBox).join("");
+      const svg = [
+        `<?xml version="1.0" encoding="UTF-8"?>`,
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${metrics.targetWidth}" height="${metrics.targetHeight}" viewBox="0 0 ${metrics.targetWidth} ${metrics.targetHeight}">`,
+        `<rect width="100%" height="100%" fill="#ffffff"/>`,
+        imageNodes,
+        textNodes,
+        `</svg>`
+      ].join("");
+      return new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    }
+
+    async function exportBlob() {
+      if (controlValue("exportFormat", "png") === "svg") return exportSvgBlob();
+      renderFigure(canvas, ctx, { showSelection: false, showGuides: false });
+      const rawBlob = await canvasBlob(canvas);
+      renderCanvas();
+      return controlValue("exportFormat", "png") === "png" ? pngWithDpi(rawBlob, controlValue("exportDpi", "300")) : rawBlob;
+    }
+
+    function outputImageName() {
       const outputName = controlValue("output", "combined_figure").trim().replace(/\.[^.]+$/, "") || "combined_figure";
-      return `${outputName}.png`;
+      const format = controlValue("exportFormat", "png");
+      const extension = format === "jpeg" ? "jpg" : format;
+      return `${outputName}.${extension}`;
     }
 
-    function downloadCanvasPng() {
-      if (!panelFiles.length) return;
+    async function downloadCanvasImage() {
+      if (!panelFiles.length && !textBoxes.length) return;
       const link = document.createElement("a");
-      link.download = outputPngName();
-      link.href = canvas.toDataURL("image/png");
+      link.download = outputImageName();
+      const blob = await exportBlob();
+      link.href = URL.createObjectURL(blob);
       link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
 
     async function chooseOutputFolder() {
@@ -1498,21 +2923,22 @@
     }
 
     async function saveCanvasPng() {
-      if (!panelFiles.length) return;
+      if (!panelFiles.length && !textBoxes.length) return;
       if (!outputDirectoryHandle) {
-        downloadCanvasPng();
+        downloadCanvasImage();
         return;
       }
 
       try {
-        const fileHandle = await outputDirectoryHandle.getFileHandle(outputPngName(), { create: true });
+        const fileHandle = await outputDirectoryHandle.getFileHandle(outputImageName(), { create: true });
         const writable = await fileHandle.createWritable();
-        await writable.write(await canvasBlob());
+        await writable.write(await exportBlob());
         await writable.close();
-        outputFolderStatus.textContent = `已保存：${outputPngName()} → ${outputDirectoryHandle.name}`;
+        const dpiText = controlValue("exportFormat", "png") === "png" ? `（${controlValue("exportDpi", "300")} DPI）` : "";
+        outputFolderStatus.textContent = `已保存：${outputImageName()}${dpiText} → ${outputDirectoryHandle.name}`;
       } catch {
         outputFolderStatus.textContent = "写入文件夹失败，已改用浏览器下载。";
-        downloadCanvasPng();
+        downloadCanvasImage();
       }
     }
 
@@ -1560,8 +2986,12 @@
     }
 
     ids.forEach(id => document.getElementById(id)?.addEventListener("input", buildCommand));
-    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "gap", "arrangeMode"].forEach(id => {
+    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "gap", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", renderCanvas);
+    });
+    on("exportDpi", "input", () => {
+      if (document.getElementById("dpi")) document.getElementById("dpi").value = controlValue("exportDpi", "300");
+      buildCommand();
     });
 
     filePicker.addEventListener("change", event => addFiles(event.target.files));
@@ -1589,14 +3019,38 @@
 
     fileList.addEventListener("click", event => {
       const button = event.target.closest("button[data-action]");
+      const row = event.target.closest(".file-row[data-index]");
+      if (!row) return;
+      const index = Number(row.dataset.index);
+      selectedIndex = index;
+      selectedType = "panel";
+      renderFileList();
+      renderCanvas();
       if (!button) return;
-      const index = Number(button.dataset.index);
-      if (button.dataset.action === "up") moveFile(index, index - 1);
-      if (button.dataset.action === "down") moveFile(index, index + 1);
-      if (button.dataset.action === "remove") removeFile(index);
+      if (button.dataset.action === "crop") openCropModal(index);
+      if (button.dataset.action === "up") {
+        moveFile(index, index - 1);
+      }
+      if (button.dataset.action === "down") {
+        moveFile(index, index + 1);
+      }
+      if (button.dataset.action === "remove") {
+        removeFile(index);
+      }
     });
 
-    on("renderBtn", "click", renderCanvas);
+    on("addTextBtn", "click", addTextBox);
+    on("updateTextBtn", "click", updateSelectedTextBox);
+    on("deleteTextBtn", "click", deleteSelectedTextBox);
+    ["textContentInput", "textFont", "textSize", "textColor"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", () => {
+        if (selectedTextBox()) {
+          updateSelectedTextBox();
+        }
+      });
+    });
+
+    on("renderBtn", "click", openPreviewModal);
     on("downloadPngBtn", "click", saveCanvasPng);
     on("chooseOutputFolderBtn", "click", event => {
       event.preventDefault();
@@ -1608,22 +3062,98 @@
       if (document.getElementById("arrangeMode")) document.getElementById("arrangeMode").value = "manual";
       renderCanvas();
     });
-    on("scaleUpBtn", "click", () => scaleSelected(1.12));
+    on("fullscreenEditBtn", "click", openFullscreenEditor);
+    on("svgInnerEditBtn", "click", openSvgEditor);
+    on("scaleUpBtn", "click", () => scaleSelected(1.4));
     on("scaleDownBtn", "click", () => scaleSelected(0.9));
     on("bringForwardBtn", "click", () => moveLayer(1));
     on("sendBackwardBtn", "click", () => moveLayer(-1));
+    on("closePreviewBtn", "click", closePreviewModal);
+    on("closeCropBtn", "click", closeCropModal);
+    on("closeFullscreenBtn", "click", closeFullscreenEditor);
+    on("closeSvgEditorBtn", "click", closeSvgEditor);
+    on("fullscreenCancelBtn", "click", closeFullscreenEditor);
+    on("fullscreenScaleUpBtn", "click", () => scaleSelectedInFullscreen(1.25));
+    on("fullscreenScaleDownBtn", "click", () => scaleSelectedInFullscreen(0.85));
+    on("fullscreenZoomInBtn", "click", () => zoomFullscreen(1.25));
+    on("fullscreenZoomOutBtn", "click", () => zoomFullscreen(0.8));
+    on("applyCropBtn", "click", applyCrop);
+    on("resetCropBtn", "click", resetCrop);
+    on("svgApplyBtn", "click", applySvgEditor);
+    on("svgAddTextBtn", "click", addSvgTextElement);
+    on("svgClearTextBtn", "click", clearSvgTextElement);
+    on("svgDeleteElementBtn", "click", deleteSvgElement);
+    on("svgNudgeUpBtn", "click", () => nudgeSvgElement(0, -4));
+    on("svgNudgeDownBtn", "click", () => nudgeSvgElement(0, 4));
+    on("svgNudgeLeftBtn", "click", () => nudgeSvgElement(-4, 0));
+    on("svgNudgeRightBtn", "click", () => nudgeSvgElement(4, 0));
+    ["svgTextValue", "svgFontSize", "svgFillColor", "svgStrokeColor", "svgStrokeWidth", "svgOpacity", "svgElementX", "svgElementY"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", updateSvgElementAttribute);
+    });
+    svgElementList.addEventListener("click", event => {
+      const button = event.target.closest("button[data-svg-edit-id]");
+      if (!button) return;
+      const element = svgEditorStage.querySelector(`[data-svg-edit-id="${button.dataset.svgEditId}"]`);
+      selectSvgElement(element);
+    });
+    svgEditorStage.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
+      selectSvgElement(event.target);
+    });
+    cropInputs.forEach(input => {
+      input.addEventListener("input", () => {
+        clampCropInputs(input);
+        renderCropCanvas();
+      });
+    });
+    [previewModal, cropModal, fullscreenModal, svgEditorModal].forEach(modal => {
+      modal.addEventListener("click", event => {
+        if (event.target === previewModal) closePreviewModal();
+        if (event.target === cropModal) closeCropModal();
+        if (event.target === fullscreenModal) closeFullscreenEditor();
+        if (event.target === svgEditorModal) closeSvgEditor();
+      });
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closePreviewModal();
+        closeCropModal();
+        closeFullscreenEditor();
+        closeSvgEditor();
+      }
+    });
     canvas.addEventListener("pointerdown", startPanelDrag);
     canvas.addEventListener("pointermove", movePanelDrag);
     canvas.addEventListener("pointerup", endPanelDrag);
     canvas.addEventListener("pointerleave", endPanelDrag);
     canvas.addEventListener("pointercancel", endPanelDrag);
+    canvas.addEventListener("dblclick", event => {
+      const index = hitTest(canvasPoint(event));
+      if (index >= 0) {
+        selectedType = "panel";
+        selectedIndex = index;
+      }
+      openFullscreenEditor();
+    });
+    fullscreenCanvas.addEventListener("pointerdown", startFullscreenDrag);
+    fullscreenCanvas.addEventListener("pointermove", moveFullscreenDrag);
+    fullscreenCanvas.addEventListener("pointerup", endFullscreenDrag);
+    fullscreenCanvas.addEventListener("pointerleave", endFullscreenDrag);
+    fullscreenCanvas.addEventListener("pointercancel", endFullscreenDrag);
     on("clearFilesBtn", "click", () => {
       panelFiles.splice(0).forEach(item => URL.revokeObjectURL(item.url));
-      selectedIndex = -1;
+      selectedType = textBoxes.length ? "text" : "panel";
+      selectedIndex = textBoxes.length ? 0 : -1;
+      closePreviewModal();
+      closeCropModal();
+      closeFullscreenEditor();
+      closeSvgEditor();
       renderFileList();
       renderCanvas();
     });
 
+    if (document.getElementById("dpi") && document.getElementById("exportDpi")) document.getElementById("dpi").value = document.getElementById("exportDpi").value;
     buildCommand();
     renderFileList();
     renderCanvas();

@@ -8,16 +8,19 @@ It is designed for biomedical and bioinformatics figures such as volcano plots, 
 
 ## Features
 
-- Drag images into the page or select images from your computer
+- Drag PNG, JPG/JPEG, WEBP, GIF, BMP, SVG, and browser-supported TIFF images into the page or select them from your computer
 - Arrange panels automatically with grids such as `2x2`, `2x3`, `3x3`, `4x4`, and `5x5`
 - Switch to free-drag mode and manually move each panel
 - Alignment guide lines while dragging
 - Resize selected panels
+- Fullscreen zoom editing for the whole assembled figure
 - Move panels forward/backward by layer
 - Auto panel labels: `A`, `B`, `C`, `D`...
 - Transparent label background
 - Custom canvas width and height
-- Download the final layout as PNG
+- Download the final layout as PNG, JPG/JPEG, WEBP, or SVG
+- Imported SVG files are inlined when exporting SVG, so vector elements remain editable after ungrouping in tools such as Illustrator or Inkscape
+- Built-in SVG inner editor with element recognition, element list selection, fill/stroke/text/font/opacity/position edits, added text, text clearing, nudging, and deletion
 - Runs entirely in the browser; no upload and no server required
 
 ## Usage
