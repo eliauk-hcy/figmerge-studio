@@ -17,6 +17,8 @@ It is designed for biomedical and bioinformatics figures such as volcano plots, 
 - Move panels forward/backward by layer
 - Auto panel labels: `A`, `B`, `C`, `D`...
 - Transparent label background
+- Adjustable label anchor, horizontal offset, and vertical offset
+- Optional panel borders with adjustable color, width, and solid/dashed styles
 - Custom canvas width and height
 - Download the final layout as PNG, JPG/JPEG, WEBP, TIFF, PDF, or SVG
 - Panel labels can use `A`, `(A)`, `a`, or `(a)` styles

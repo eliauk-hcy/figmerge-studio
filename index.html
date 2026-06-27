@@ -1119,6 +1119,36 @@
                 <input id="previewLabelSize" type="number" min="12" value="64">
               </label>
               <label>
+                标签横向移动
+                <input id="labelOffsetX" type="number" step="5" value="0">
+              </label>
+              <label>
+                标签纵向移动
+                <input id="labelOffsetY" type="number" step="5" value="0">
+              </label>
+              <label>
+                图片边框
+                <select id="panelBorderEnabled">
+                  <option value="off" selected>不添加</option>
+                  <option value="on">添加</option>
+                </select>
+              </label>
+              <label>
+                边框颜色
+                <input id="panelBorderColor" type="color" value="#111827">
+              </label>
+              <label>
+                边框粗细
+                <input id="panelBorderWidth" type="number" min="1" max="80" step="1" value="6">
+              </label>
+              <label>
+                边框样式
+                <select id="panelBorderStyle">
+                  <option value="solid" selected>实线</option>
+                  <option value="dashed">虚线</option>
+                </select>
+              </label>
+              <label>
                 图间距
                 <input id="gap" type="number" min="0" value="32">
               </label>
@@ -1148,7 +1178,7 @@
             </div>
 
             <div class="actions">
-              <button id="resetLayoutBtn" type="button">重置为网格</button>
+              <button id="resetLayoutBtn" type="button">选中图片</button>
               <button id="bringForwardBtn" type="button">上移一层</button>
               <button id="sendBackwardBtn" type="button">下移一层</button>
               <button id="fullscreenEditBtn" type="button">全屏放大编辑</button>
@@ -1400,8 +1430,15 @@
           <option value="1200">1200</option>
         </select>
         <input id="labels" value="A,B,C,D">
-        <select id="labelPosition"><option value="topleft" selected>左上</option></select>
+        <select id="labelPosition">
+          <option value="topleft" selected>左上</option>
+          <option value="topright">右上</option>
+          <option value="bottomleft">左下</option>
+          <option value="bottomright">右下</option>
+        </select>
         <input id="labelSize" value="42">
+        <input id="labelOffsetXCommand" value="0">
+        <input id="labelOffsetYCommand" value="0">
         <div id="command"></div>
       </div>
     </div>
@@ -1588,6 +1625,8 @@
       dpi: "600",
       labels: "A,B,C,D",
       labelPosition: "topleft",
+      labelOffsetXCommand: "0",
+      labelOffsetYCommand: "0",
       gap: "32",
       labelSize: "42"
     };
@@ -1857,6 +1896,9 @@
       if (document.getElementById("inputs")) document.getElementById("inputs").value = panelFiles.map(itemDisplayName).join(" ");
       if (document.getElementById("labels")) document.getElementById("labels").value = styledLabels(panelFiles.length).join(",");
       if (document.getElementById("dpi") && document.getElementById("exportDpi")) document.getElementById("dpi").value = document.getElementById("exportDpi").value;
+      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = controlValue("previewLabelPosition", "topleft");
+      if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = controlValue("labelOffsetX", "0");
+      if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = controlValue("labelOffsetY", "0");
       const recommended = parseGrid("", panelFiles.length);
       if (document.getElementById("layout")) document.getElementById("layout").value = `${recommended.rows}x${recommended.cols}`;
       if (document.getElementById("previewLayout")) document.getElementById("previewLayout").value = `${recommended.rows}x${recommended.cols}`;
@@ -1939,6 +1981,16 @@
       targetCtx.drawImage(item.image, sx, sy, sw, sh, dx, dy, drawWidth, drawHeight);
     }
 
+    function panelBorderOptions() {
+      const width = Math.max(1, Number(controlValue("panelBorderWidth", "6")) || 6);
+      return {
+        enabled: controlValue("panelBorderEnabled", "off") === "on",
+        color: controlValue("panelBorderColor", "#111827") || "#111827",
+        width,
+        style: controlValue("panelBorderStyle", "solid")
+      };
+    }
+
     function controlValue(id, fallback = "") {
       return document.getElementById(id)?.value ?? fallback;
     }
@@ -1992,6 +2044,16 @@
       targetCtx.fillRect(box.x, box.y, box.width, box.height);
       drawContain(targetCtx, item, box.x, box.y, box.width, box.height);
 
+      const border = panelBorderOptions();
+      if (border.enabled) {
+        targetCtx.save();
+        targetCtx.strokeStyle = border.color;
+        targetCtx.lineWidth = border.width;
+        targetCtx.setLineDash(border.style === "dashed" ? [border.width * 3, border.width * 2] : []);
+        targetCtx.strokeRect(box.x + border.width / 2, box.y + border.width / 2, Math.max(1, box.width - border.width), Math.max(1, box.height - border.width));
+        targetCtx.restore();
+      }
+
       if (options.showSelection && selectedType === "panel" && index === selectedIndex && controlValue("arrangeMode", "grid") === "manual") {
         targetCtx.save();
         targetCtx.strokeStyle = "#146c94";
@@ -2007,7 +2069,7 @@
       const labelWidth = metrics.width;
       const labelHeight = labelSize;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
-      const [lx, ly] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin);
+      const [lx, ly] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, labelOffset());
 
       targetCtx.fillStyle = "#111827";
       targetCtx.fillText(label, lx, ly);
@@ -2130,11 +2192,25 @@
       }
     }
 
-    function labelXY(position, x, y, width, height, labelWidth, labelHeight, margin) {
-      if (position === "topright") return [x + width - labelWidth - margin, y + margin];
-      if (position === "bottomleft") return [x + margin, y + height - labelHeight - margin];
-      if (position === "bottomright") return [x + width - labelWidth - margin, y + height - labelHeight - margin];
-      return [x + margin, y + margin];
+    function labelOffset() {
+      return {
+        x: Number(controlValue("labelOffsetX", "0")) || 0,
+        y: Number(controlValue("labelOffsetY", "0")) || 0
+      };
+    }
+
+    function labelXY(position, x, y, width, height, labelWidth, labelHeight, margin, offset = { x: 0, y: 0 }) {
+      let lx = x + margin;
+      let ly = y + margin;
+      if (position === "topright") {
+        lx = x + width - labelWidth - margin;
+      } else if (position === "bottomleft") {
+        ly = y + height - labelHeight - margin;
+      } else if (position === "bottomright") {
+        lx = x + width - labelWidth - margin;
+        ly = y + height - labelHeight - margin;
+      }
+      return [lx + (offset.x || 0), ly + (offset.y || 0)];
     }
 
     function renderFigure(targetCanvas = canvas, targetCtx = ctx, options = {}) {
@@ -3024,8 +3100,16 @@
       const labelWidth = label.length * labelSize * 0.62;
       const labelHeight = labelSize;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
-      const [x, y] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin);
+      const [x, y] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, labelOffset());
       return `<text x="${x}" y="${y}" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${labelSize}" font-weight="700" fill="#111827">${xmlEscape(label)}</text>`;
+    }
+
+    function svgPanelBorder(box) {
+      const border = panelBorderOptions();
+      if (!border.enabled) return "";
+      const dash = border.style === "dashed" ? ` stroke-dasharray="${border.width * 3} ${border.width * 2}"` : "";
+      const inset = border.width / 2;
+      return `<rect x="${box.x + inset}" y="${box.y + inset}" width="${Math.max(1, box.width - border.width)}" height="${Math.max(1, box.height - border.width)}" fill="none" stroke="${xmlEscape(border.color)}" stroke-width="${border.width}"${dash}/>`;
     }
 
     function svgPanelContent(item, draw, dataUrl, index) {
@@ -3080,6 +3164,7 @@
         return [
           `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" fill="#ffffff"/>`,
           svgPanelContent(item, draw, imageUrls[index], index),
+          svgPanelBorder(box),
           svgLabel(labels[index], box, labelSize, labelPosition)
         ].join("");
       }).join("");
@@ -3196,6 +3281,8 @@
       if (values.dpi) parts.push("--dpi", values.dpi);
       if (values.labels) parts.push("--labels", shellQuote(values.labels));
       if (values.labelPosition) parts.push("--label-position", values.labelPosition);
+      if (values.labelOffsetXCommand) parts.push("--label-offset-x", values.labelOffsetXCommand);
+      if (values.labelOffsetYCommand) parts.push("--label-offset-y", values.labelOffsetYCommand);
       if (values.gap) parts.push("--gap", values.gap);
       if (values.labelSize) parts.push("--label-size", values.labelSize);
 
@@ -3216,8 +3303,19 @@
     }
 
     ids.forEach(id => document.getElementById(id)?.addEventListener("input", buildCommand));
-    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "labelStyle", "gap", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
+    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "labelStyle", "labelOffsetX", "labelOffsetY", "panelBorderEnabled", "panelBorderColor", "panelBorderWidth", "panelBorderStyle", "gap", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", renderCanvas);
+    });
+    ["labelOffsetX", "labelOffsetY"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", () => {
+        if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = controlValue("labelOffsetX", "0");
+        if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = controlValue("labelOffsetY", "0");
+        buildCommand();
+      });
+    });
+    on("previewLabelPosition", "input", () => {
+      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = controlValue("previewLabelPosition", "topleft");
+      buildCommand();
     });
     on("exportDpi", "input", () => {
       if (document.getElementById("dpi")) document.getElementById("dpi").value = controlValue("exportDpi", "300");
@@ -3288,8 +3386,12 @@
       chooseOutputFolder();
     });
     on("resetLayoutBtn", "click", () => {
-      resetGridLayout();
+      if (panelFiles.length && (selectedType !== "panel" || selectedIndex < 0)) {
+        selectedIndex = 0;
+      }
+      selectedType = "panel";
       if (document.getElementById("arrangeMode")) document.getElementById("arrangeMode").value = "manual";
+      renderFileList();
       renderCanvas();
     });
     on("fullscreenEditBtn", "click", openFullscreenEditor);
