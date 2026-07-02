@@ -1078,6 +1078,13 @@
                 <input id="canvasHeight" type="number" min="600" step="100" value="1800">
               </label>
               <label>
+                排版高度
+                <select id="layoutHeightMode">
+                  <option value="compact" selected>紧凑自适应</option>
+                  <option value="fixed">固定画布</option>
+                </select>
+              </label>
+              <label>
                 预览布局
                 <select id="previewLayout">
                   <option value="">自动</option>
@@ -1103,6 +1110,13 @@
                   <option value="topright">右上</option>
                   <option value="bottomleft">左下</option>
                   <option value="bottomright">右下</option>
+                </select>
+              </label>
+              <label>
+                标签调整对象
+                <select id="labelEditScope">
+                  <option value="selected" selected>选中图片</option>
+                  <option value="all">全部图片</option>
                 </select>
               </label>
               <label>
@@ -1151,6 +1165,13 @@
               <label>
                 图间距
                 <input id="gap" type="number" min="0" value="32">
+              </label>
+              <label>
+                图片填充
+                <select id="imageFitMode">
+                  <option value="contain" selected>完整显示</option>
+                  <option value="cover">填满图框</option>
+                </select>
               </label>
               <label>
                 导出 DPI
@@ -1676,6 +1697,35 @@
       return item.displayName || item.file?.name || "未命名图片";
     }
 
+    function defaultPanelLabelSettings() {
+      return {
+        position: controlValue("previewLabelPosition", "topleft"),
+        offsetX: Number(controlValue("labelOffsetX", "0")) || 0,
+        offsetY: Number(controlValue("labelOffsetY", "0")) || 0
+      };
+    }
+
+    function ensurePanelLabelSettings(item) {
+      if (!item.labelSettings) item.labelSettings = defaultPanelLabelSettings();
+      item.labelSettings.position ||= "topleft";
+      item.labelSettings.offsetX = Number(item.labelSettings.offsetX) || 0;
+      item.labelSettings.offsetY = Number(item.labelSettings.offsetY) || 0;
+      return item.labelSettings;
+    }
+
+    function panelItemFromImage(file, image, url, extra = {}) {
+      return {
+        file,
+        image,
+        url,
+        box: null,
+        crop: { left: 0, right: 0, top: 0, bottom: 0 },
+        labelSettings: defaultPanelLabelSettings(),
+        svgInfo: null,
+        ...extra
+      };
+    }
+
     function getPdfLibrary() {
       return window.pdfjsLib || window["pdfjs-dist/build/pdf"] || null;
     }
@@ -1782,7 +1832,7 @@
               svgInfo = null;
             }
           }
-          resolve({ file, image, url, box: null, crop: { left: 0, right: 0, top: 0, bottom: 0 }, svgInfo });
+          resolve(panelItemFromImage(file, image, url, { svgInfo }));
         };
         image.onerror = () => {
           URL.revokeObjectURL(url);
@@ -1815,7 +1865,7 @@
             offscreen.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(rgba), width, height), 0, 0);
             const url = offscreen.toDataURL("image/png");
             const image = new Image();
-            image.onload = () => resolve({ file, image, url, box: null, crop: { left: 0, right: 0, top: 0, bottom: 0 }, svgInfo: null });
+            image.onload = () => resolve(panelItemFromImage(file, image, url));
             image.onerror = () => reject(new Error(`无法预览 TIFF：${file.name}`));
             image.src = url;
           } catch (error) {
@@ -1829,7 +1879,7 @@
     function imageFromDataUrl(url, file, displayName) {
       return new Promise((resolve, reject) => {
         const image = new Image();
-        image.onload = () => resolve({ file, image, url, displayName, box: null, crop: { left: 0, right: 0, top: 0, bottom: 0 }, svgInfo: null });
+        image.onload = () => resolve(panelItemFromImage(file, image, url, { displayName }));
         image.onerror = () => reject(new Error(`无法预览 PDF 页面：${displayName}`));
         image.src = url;
       });
@@ -1884,6 +1934,7 @@
       selectedIndex = panelFiles.length - 1;
       selectedType = "panel";
       syncInputsFromFiles();
+      syncLabelControlsFromSelectedPanel();
       resetGridLayout();
       renderFileList();
       renderCanvas();
@@ -1896,9 +1947,10 @@
       if (document.getElementById("inputs")) document.getElementById("inputs").value = panelFiles.map(itemDisplayName).join(" ");
       if (document.getElementById("labels")) document.getElementById("labels").value = styledLabels(panelFiles.length).join(",");
       if (document.getElementById("dpi") && document.getElementById("exportDpi")) document.getElementById("dpi").value = document.getElementById("exportDpi").value;
-      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = controlValue("previewLabelPosition", "topleft");
-      if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = controlValue("labelOffsetX", "0");
-      if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = controlValue("labelOffsetY", "0");
+      const settings = selectedPanel() ? ensurePanelLabelSettings(selectedPanel()) : defaultPanelLabelSettings();
+      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = settings.position;
+      if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = settings.offsetX;
+      if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = settings.offsetY;
       const recommended = parseGrid("", panelFiles.length);
       if (document.getElementById("layout")) document.getElementById("layout").value = `${recommended.rows}x${recommended.cols}`;
       if (document.getElementById("previewLayout")) document.getElementById("previewLayout").value = `${recommended.rows}x${recommended.cols}`;
@@ -1940,12 +1992,16 @@
         return values.some(Boolean) ? ` · 裁剪 ${values.join("/")}%` : "";
       };
       const svgSummary = item => item.svgInfo?.content ? " · SVG可编辑" : "";
+      const labelSummary = item => {
+        const settings = ensurePanelLabelSettings(item);
+        return ` · 标签 ${settings.position} ${settings.offsetX}/${settings.offsetY}`;
+      };
       fileList.innerHTML = panelFiles.map((item, index) => `
         <div class="file-row${selectedType === "panel" && index === selectedIndex ? " selected" : ""}" data-index="${index}">
           <img src="${item.url}" alt="">
           <div class="file-meta">
             <span class="file-name">${itemDisplayName(item)}</span>
-            <span class="file-label">Panel ${labels[index]} · ${item.image.naturalWidth}×${item.image.naturalHeight}${cropSummary(item)}${svgSummary(item)}</span>
+            <span class="file-label">Panel ${labels[index]} · ${item.image.naturalWidth}×${item.image.naturalHeight}${labelSummary(item)}${cropSummary(item)}${svgSummary(item)}</span>
           </div>
           <div class="row-actions">
             <button class="icon-btn" type="button" data-action="crop" data-index="${index}" title="裁剪">裁</button>
@@ -1973,12 +2029,18 @@
 
     function drawContain(targetCtx, item, x, y, width, height) {
       const { sx, sy, sw, sh } = cropSource(item);
-      const scale = Math.min(width / sw, height / sh);
+      const fitMode = controlValue("imageFitMode", "contain");
+      const scale = fitMode === "contain" ? Math.min(width / sw, height / sh) : Math.max(width / sw, height / sh);
       const drawWidth = sw * scale;
       const drawHeight = sh * scale;
       const dx = x + (width - drawWidth) / 2;
       const dy = y + (height - drawHeight) / 2;
+      targetCtx.save();
+      targetCtx.beginPath();
+      targetCtx.rect(x, y, width, height);
+      targetCtx.clip();
       targetCtx.drawImage(item.image, sx, sy, sw, sh, dx, dy, drawWidth, drawHeight);
+      targetCtx.restore();
     }
 
     function panelBorderOptions() {
@@ -2004,9 +2066,25 @@
       const gap = Number(controlValue("gap", "32")) || 32;
       const outer = 48;
       const panelWidth = Math.floor((targetWidth - outer * 2 - gap * (grid.cols - 1)) / grid.cols);
-      const panelHeight = Math.floor((requestedHeight - outer * 2 - gap * (grid.rows - 1)) / grid.rows);
-      const targetHeight = requestedHeight;
-      return { targetWidth, targetHeight, grid, gap, outer, panelWidth, panelHeight };
+      const fixedPanelHeight = Math.floor((requestedHeight - outer * 2 - gap * (grid.rows - 1)) / grid.rows);
+      const compact = controlValue("layoutHeightMode", "compact") === "compact" && panelFiles.length;
+      const rowHeights = Array.from({ length: grid.rows }, (_, row) => {
+        if (!compact) return fixedPanelHeight;
+        const start = row * grid.cols;
+        const rowItems = panelFiles.slice(start, start + grid.cols);
+        if (!rowItems.length) return fixedPanelHeight;
+        const ratios = rowItems.map(item => {
+          const { sw, sh } = cropSource(item);
+          return sh / Math.max(sw, 1);
+        });
+        const rowRatio = Math.max(...ratios);
+        return Math.max(80, Math.round(panelWidth * rowRatio));
+      });
+      const panelHeight = compact ? rowHeights[0] || fixedPanelHeight : fixedPanelHeight;
+      const targetHeight = compact
+        ? Math.max(outer * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + gap * Math.max(0, grid.rows - 1), 1)
+        : requestedHeight;
+      return { targetWidth, targetHeight, grid, gap, outer, panelWidth, panelHeight, rowHeights };
     }
 
     function resetGridLayout() {
@@ -2016,9 +2094,9 @@
         const col = index % metrics.grid.cols;
         item.box = {
           x: metrics.outer + col * (metrics.panelWidth + metrics.gap),
-          y: metrics.outer + row * (metrics.panelHeight + metrics.gap),
+          y: metrics.outer + metrics.rowHeights.slice(0, row).reduce((sum, height) => sum + height, 0) + row * metrics.gap,
           width: metrics.panelWidth,
-          height: metrics.panelHeight
+          height: metrics.rowHeights[row] || metrics.panelHeight
         };
       });
       lastCanvasWidth = metrics.targetWidth;
@@ -2037,7 +2115,7 @@
       return metrics;
     }
 
-    function drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, labelPosition, options = {}) {
+    function drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, options = {}) {
       const box = item.box;
       if (!box) return;
       targetCtx.fillStyle = "#ffffff";
@@ -2064,12 +2142,16 @@
       }
 
       const label = labels[index];
+      const labelSettings = ensurePanelLabelSettings(item);
       targetCtx.font = `700 ${labelSize}px Arial, Microsoft YaHei, sans-serif`;
       const metrics = targetCtx.measureText(label);
       const labelWidth = metrics.width;
       const labelHeight = labelSize;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
-      const [lx, ly] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, labelOffset());
+      const [lx, ly] = labelXY(labelSettings.position, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, {
+        x: labelSettings.offsetX,
+        y: labelSettings.offsetY
+      });
 
       targetCtx.fillStyle = "#111827";
       targetCtx.fillText(label, lx, ly);
@@ -2136,7 +2218,7 @@
       const values = [0, metrics.outer, canvasMax / 2, canvasMax - metrics.outer, canvasMax];
 
       panelFiles.forEach((item, index) => {
-        if (index === movingIndex || !item.box) return;
+        if ((selectedType === "panel" && index === movingIndex) || !item.box) return;
         const box = item.box;
         if (axis === "x") {
           values.push(box.x, box.x + box.width / 2, box.x + box.width);
@@ -2145,7 +2227,27 @@
         }
       });
 
+      textBoxes.forEach((textBox, index) => {
+        if (selectedType === "text" && index === movingIndex) return;
+        const box = textBoxBounds(textBox);
+        if (axis === "x") {
+          values.push(box.x, box.x + box.width / 2, box.x + box.width);
+        } else {
+          values.push(box.y, box.y + box.height / 2, box.y + box.height);
+        }
+      });
+
       return values;
+    }
+
+    function textBoxBounds(textBox) {
+      const metrics = measureTextBox(ctx, textBox);
+      return {
+        x: textBox.x,
+        y: textBox.y,
+        width: metrics.width,
+        height: metrics.height
+      };
     }
 
     function snapBox(box, movingIndex) {
@@ -2192,11 +2294,41 @@
       }
     }
 
-    function labelOffset() {
-      return {
-        x: Number(controlValue("labelOffsetX", "0")) || 0,
-        y: Number(controlValue("labelOffsetY", "0")) || 0
-      };
+    function snapTextBox(textBox, movingIndex) {
+      const box = textBoxBounds(textBox);
+      snapBox(box, movingIndex);
+      textBox.x = box.x;
+      textBox.y = box.y;
+    }
+
+    function selectedPanel() {
+      return selectedType === "panel" && selectedIndex >= 0 ? panelFiles[selectedIndex] : null;
+    }
+
+    function syncLabelControlsFromSelectedPanel() {
+      const item = selectedPanel();
+      if (!item || controlValue("labelEditScope", "selected") !== "selected") return;
+      const settings = ensurePanelLabelSettings(item);
+      document.getElementById("previewLabelPosition").value = settings.position;
+      document.getElementById("labelOffsetX").value = settings.offsetX;
+      document.getElementById("labelOffsetY").value = settings.offsetY;
+      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = settings.position;
+      if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = settings.offsetX;
+      if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = settings.offsetY;
+      buildCommand();
+    }
+
+    function applyLabelControlsToPanels() {
+      const settings = defaultPanelLabelSettings();
+      const targets = controlValue("labelEditScope", "selected") === "all"
+        ? panelFiles
+        : selectedPanel() ? [selectedPanel()] : [];
+      targets.forEach(item => { item.labelSettings = { ...settings }; });
+      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = settings.position;
+      if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = settings.offsetX;
+      if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = settings.offsetY;
+      buildCommand();
+      renderCanvas();
     }
 
     function labelXY(position, x, y, width, height, labelWidth, labelHeight, margin, offset = { x: 0, y: 0 }) {
@@ -2218,7 +2350,6 @@
       const arrangeMode = controlValue("arrangeMode", "grid");
       const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
       const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
-      const labelPosition = controlValue("previewLabelPosition", "topleft");
 
       if (!options.preserveCanvasSize) {
         targetCanvas.width = metrics.targetWidth;
@@ -2244,7 +2375,7 @@
         resetGridLayout();
       }
 
-      panelFiles.forEach((item, index) => drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, labelPosition, {
+      panelFiles.forEach((item, index) => drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, {
         showSelection: options.showSelection !== false
       }));
       textBoxes.forEach((textBox, index) => drawTextBox(targetCtx, textBox, index, {
@@ -2316,6 +2447,7 @@
       const index = hitTest(point);
       selectedType = "panel";
       selectedIndex = index;
+      syncLabelControlsFromSelectedPanel();
       if (index >= 0) {
         const box = panelFiles[index].box;
         isDraggingPanel = true;
@@ -2333,6 +2465,7 @@
         const textBox = textBoxes[selectedIndex];
         textBox.x = point.x - dragOffsetX;
         textBox.y = point.y - dragOffsetY;
+        snapTextBox(textBox, selectedIndex);
         event.preventDefault();
         renderCanvas();
         return;
@@ -2374,7 +2507,7 @@
       fullscreenCanvas.style.height = `${fullscreenCanvas.height}px`;
       fullscreenCtx.save();
       fullscreenCtx.scale(fullscreenZoom, fullscreenZoom);
-      renderFigure(fullscreenCanvas, fullscreenCtx, { showSelection: true, showGuides: false, preserveCanvasSize: true });
+      renderFigure(fullscreenCanvas, fullscreenCtx, { showSelection: true, showGuides: true, preserveCanvasSize: true });
       fullscreenCtx.restore();
     }
 
@@ -2430,6 +2563,7 @@
       const index = hitTest(point);
       selectedType = "panel";
       selectedIndex = index;
+      syncLabelControlsFromSelectedPanel();
       renderFileList();
       if (index < 0) {
         renderFullscreenEditor();
@@ -2452,6 +2586,7 @@
         if (!textBox) return;
         textBox.x = point.x - dragOffsetX;
         textBox.y = point.y - dragOffsetY;
+        snapTextBox(textBox, selectedIndex);
       } else {
         const box = panelFiles[selectedIndex]?.box;
         if (!box) return;
@@ -2465,6 +2600,7 @@
 
     function endFullscreenDrag() {
       fullscreenDragging = false;
+      activeGuides = [];
       fullscreenCanvas.classList.remove("dragging-canvas");
       renderFileList();
       renderCanvas();
@@ -2898,6 +3034,30 @@
       return new Promise(resolve => sourceCanvas.toBlob(resolve, mimeType, quality));
     }
 
+    function exportScaleForDpi(dpi) {
+      return Math.max(1, (Number(dpi) || 300) / 300);
+    }
+
+    function renderExportCanvas() {
+      const dpi = controlValue("exportDpi", "300");
+      const scale = exportScaleForDpi(dpi);
+      const metrics = controlValue("arrangeMode", "grid") === "manual" ? ensureManualBoxes() : getLayoutMetrics();
+      if (panelFiles.length && controlValue("arrangeMode", "grid") === "grid") resetGridLayout();
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = Math.max(1, Math.round(metrics.targetWidth * scale));
+      exportCanvas.height = Math.max(1, Math.round(metrics.targetHeight * scale));
+      const exportCtx = exportCanvas.getContext("2d");
+      exportCtx.save();
+      exportCtx.scale(scale, scale);
+      renderFigure(exportCanvas, exportCtx, {
+        showSelection: false,
+        showGuides: false,
+        preserveCanvasSize: true
+      });
+      exportCtx.restore();
+      return exportCanvas;
+    }
+
     function rationalBytes(numerator, denominator = 1) {
       const bytes = new Uint8Array(8);
       const view = new DataView(bytes.buffer);
@@ -3081,7 +3241,8 @@
 
     function svgContain(item, box) {
       const { sx, sy, sw, sh } = cropSource(item);
-      const scale = Math.min(box.width / sw, box.height / sh);
+      const fitMode = controlValue("imageFitMode", "contain");
+      const scale = fitMode === "contain" ? Math.min(box.width / sw, box.height / sh) : Math.max(box.width / sw, box.height / sh);
       const drawWidth = sw * scale;
       const drawHeight = sh * scale;
       return {
@@ -3096,11 +3257,15 @@
       };
     }
 
-    function svgLabel(label, box, labelSize, labelPosition) {
+    function svgLabel(label, item, box, labelSize) {
+      const labelSettings = ensurePanelLabelSettings(item);
       const labelWidth = label.length * labelSize * 0.62;
       const labelHeight = labelSize;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
-      const [x, y] = labelXY(labelPosition, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, labelOffset());
+      const [x, y] = labelXY(labelSettings.position, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, {
+        x: labelSettings.offsetX,
+        y: labelSettings.offsetY
+      });
       return `<text x="${x}" y="${y}" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${labelSize}" font-weight="700" fill="#111827">${xmlEscape(label)}</text>`;
     }
 
@@ -3112,7 +3277,8 @@
       return `<rect x="${box.x + inset}" y="${box.y + inset}" width="${Math.max(1, box.width - border.width)}" height="${Math.max(1, box.height - border.width)}" fill="none" stroke="${xmlEscape(border.color)}" stroke-width="${border.width}"${dash}/>`;
     }
 
-    function svgPanelContent(item, draw, dataUrl, index) {
+    function svgPanelContent(item, draw, box, dataUrl, index) {
+      const clipId = `panel-clip-${index}`;
       if (item.svgInfo?.content) {
         const source = item.svgInfo.viewBox;
         const cropX = source.x + (draw.sx / item.image.naturalWidth) * source.width;
@@ -3123,9 +3289,8 @@
         const scaleY = draw.height / cropHeight;
         const translateX = draw.x - cropX * scaleX;
         const translateY = draw.y - cropY * scaleY;
-        const clipId = `panel-clip-${index}`;
         return [
-          `<clipPath id="${clipId}"><rect x="${draw.x}" y="${draw.y}" width="${draw.width}" height="${draw.height}"/></clipPath>`,
+          `<clipPath id="${clipId}"><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"/></clipPath>`,
           `<g clip-path="url(#${clipId})" transform="translate(${translateX} ${translateY}) scale(${scaleX} ${scaleY})">`,
           item.svgInfo.content,
           `</g>`
@@ -3133,9 +3298,12 @@
       }
 
       return [
+        `<clipPath id="${clipId}"><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"/></clipPath>`,
+        `<g clip-path="url(#${clipId})">`,
         `<svg x="${draw.x}" y="${draw.y}" width="${draw.width}" height="${draw.height}" viewBox="${draw.sx} ${draw.sy} ${draw.sw} ${draw.sh}" preserveAspectRatio="none" overflow="hidden">`,
         `<image href="${dataUrl}" x="0" y="0" width="${item.image.naturalWidth}" height="${item.image.naturalHeight}"/>`,
-        `</svg>`
+        `</svg>`,
+        `</g>`
       ].join("");
     }
 
@@ -3155,7 +3323,6 @@
       if (panelFiles.length && arrangeMode === "grid") resetGridLayout();
       const labels = styledLabels(panelFiles.length);
       const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
-      const labelPosition = controlValue("previewLabelPosition", "topleft");
       const imageUrls = await Promise.all(panelFiles.map(imageFileDataUrl));
       const imageNodes = panelFiles.map((item, index) => {
         const box = item.box;
@@ -3163,9 +3330,9 @@
         const draw = svgContain(item, box);
         return [
           `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" fill="#ffffff"/>`,
-          svgPanelContent(item, draw, imageUrls[index], index),
+          svgPanelContent(item, draw, box, imageUrls[index], index),
           svgPanelBorder(box),
-          svgLabel(labels[index], box, labelSize, labelPosition)
+          svgLabel(labels[index], item, box, labelSize)
         ].join("");
       }).join("");
       const textNodes = textBoxes.map(svgTextBox).join("");
@@ -3182,18 +3349,18 @@
 
     async function exportBlob() {
       if (controlValue("exportFormat", "png") === "svg") return exportSvgBlob();
-      renderFigure(canvas, ctx, { showSelection: false, showGuides: false });
+      const exportCanvas = renderExportCanvas();
       if (controlValue("exportFormat", "png") === "tiff") {
-        const tiffBlob = canvasToTiffBlob(canvas, controlValue("exportDpi", "300"));
+        const tiffBlob = canvasToTiffBlob(exportCanvas, controlValue("exportDpi", "300"));
         renderCanvas();
         return tiffBlob;
       }
       if (controlValue("exportFormat", "png") === "pdf") {
-        const pdfBlob = canvasToPdfBlob(canvas, controlValue("exportDpi", "300"));
+        const pdfBlob = canvasToPdfBlob(exportCanvas, controlValue("exportDpi", "300"));
         renderCanvas();
         return pdfBlob;
       }
-      const rawBlob = await canvasBlob(canvas);
+      const rawBlob = await canvasBlob(exportCanvas);
       renderCanvas();
       return controlValue("exportFormat", "png") === "png" ? pngWithDpi(rawBlob, controlValue("exportDpi", "300")) : rawBlob;
     }
@@ -3303,20 +3470,13 @@
     }
 
     ids.forEach(id => document.getElementById(id)?.addEventListener("input", buildCommand));
-    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelPosition", "previewLabelSize", "labelStyle", "labelOffsetX", "labelOffsetY", "panelBorderEnabled", "panelBorderColor", "panelBorderWidth", "panelBorderStyle", "gap", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
+    ["canvasWidth", "canvasHeight", "layoutHeightMode", "previewLayout", "previewLabelSize", "labelStyle", "panelBorderEnabled", "panelBorderColor", "panelBorderWidth", "panelBorderStyle", "gap", "imageFitMode", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", renderCanvas);
     });
-    ["labelOffsetX", "labelOffsetY"].forEach(id => {
-      document.getElementById(id)?.addEventListener("input", () => {
-        if (document.getElementById("labelOffsetXCommand")) document.getElementById("labelOffsetXCommand").value = controlValue("labelOffsetX", "0");
-        if (document.getElementById("labelOffsetYCommand")) document.getElementById("labelOffsetYCommand").value = controlValue("labelOffsetY", "0");
-        buildCommand();
-      });
+    ["previewLabelPosition", "labelOffsetX", "labelOffsetY"].forEach(id => {
+      document.getElementById(id)?.addEventListener("input", applyLabelControlsToPanels);
     });
-    on("previewLabelPosition", "input", () => {
-      if (document.getElementById("labelPosition")) document.getElementById("labelPosition").value = controlValue("previewLabelPosition", "topleft");
-      buildCommand();
-    });
+    on("labelEditScope", "input", syncLabelControlsFromSelectedPanel);
     on("exportDpi", "input", () => {
       if (document.getElementById("dpi")) document.getElementById("dpi").value = controlValue("exportDpi", "300");
       buildCommand();
@@ -3352,6 +3512,7 @@
       const index = Number(row.dataset.index);
       selectedIndex = index;
       selectedType = "panel";
+      syncLabelControlsFromSelectedPanel();
       renderFileList();
       renderCanvas();
       if (!button) return;
