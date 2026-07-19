@@ -1070,19 +1070,12 @@
                 </select>
               </label>
               <label>
-                浏览器输出宽度
+                画布长度
                 <input id="canvasWidth" type="number" min="800" step="100" value="2400">
               </label>
               <label>
-                浏览器输出高度
+                画布高度
                 <input id="canvasHeight" type="number" min="600" step="100" value="1800">
-              </label>
-              <label>
-                排版高度
-                <select id="layoutHeightMode">
-                  <option value="compact" selected>紧凑自适应</option>
-                  <option value="fixed">固定画布</option>
-                </select>
               </label>
               <label>
                 预览布局
@@ -1630,6 +1623,9 @@
     let dragOffsetY = 0;
     let lastCanvasWidth = 0;
     let lastCanvasHeight = 0;
+    let layoutBaseWidth = 0;
+    let layoutBaseHeight = 0;
+    let layoutSignature = "";
     let activeGuides = [];
     let outputDirectoryHandle = null;
     let cropEditingIndex = -1;
@@ -2061,13 +2057,15 @@
       const count = countOverride ?? panelFiles.length;
       const targetWidth = Number(controlValue("canvasWidth", "2400")) || 2400;
       const requestedHeight = Number(controlValue("canvasHeight", "1800")) || 1800;
+      const layoutWidth = layoutBaseWidth || targetWidth;
+      const layoutHeight = layoutBaseHeight || requestedHeight;
       const layout = controlValue("previewLayout", "");
       const grid = parseGrid(layout, Math.max(count, 1));
       const gap = Number(controlValue("gap", "32")) || 32;
       const outer = 48;
-      const panelWidth = Math.floor((targetWidth - outer * 2 - gap * (grid.cols - 1)) / grid.cols);
-      const fixedPanelHeight = Math.floor((requestedHeight - outer * 2 - gap * (grid.rows - 1)) / grid.rows);
-      const compact = controlValue("layoutHeightMode", "compact") === "compact" && panelFiles.length;
+      const panelWidth = Math.floor((layoutWidth - outer * 2 - gap * (grid.cols - 1)) / grid.cols);
+      const fixedPanelHeight = Math.floor((layoutHeight - outer * 2 - gap * (grid.rows - 1)) / grid.rows);
+      const compact = Boolean(panelFiles.length);
       const rowHeights = Array.from({ length: grid.rows }, (_, row) => {
         if (!compact) return fixedPanelHeight;
         const start = row * grid.cols;
@@ -2084,19 +2082,42 @@
       const targetHeight = compact
         ? Math.max(outer * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + gap * Math.max(0, grid.rows - 1), 1)
         : requestedHeight;
-      return { targetWidth, targetHeight, grid, gap, outer, panelWidth, panelHeight, rowHeights };
+      return { targetWidth, targetHeight, layoutWidth, layoutHeight, grid, gap, outer, panelWidth, panelHeight, rowHeights };
+    }
+
+    function currentLayoutSignature() {
+      return [
+        panelFiles.length,
+        controlValue("previewLayout", ""),
+        controlValue("gap", "32"),
+        panelFiles.map(item => {
+          const crop = item.crop || {};
+          return [crop.left || 0, crop.right || 0, crop.top || 0, crop.bottom || 0].join("/");
+        }).join("|")
+      ].join("::");
     }
 
     function resetGridLayout() {
+      layoutBaseWidth = Number(controlValue("canvasWidth", "2400")) || 2400;
+      layoutBaseHeight = Number(controlValue("canvasHeight", "1800")) || 1800;
+      layoutSignature = currentLayoutSignature();
       const metrics = getLayoutMetrics();
       panelFiles.forEach((item, index) => {
         const row = Math.floor(index / metrics.grid.cols);
         const col = index % metrics.grid.cols;
+        const { sw, sh } = cropSource(item);
+        const sourceRatio = sw / Math.max(sh, 1);
+        const cellX = metrics.outer + col * (metrics.panelWidth + metrics.gap);
+        const cellY = metrics.outer + metrics.rowHeights.slice(0, row).reduce((sum, height) => sum + height, 0) + row * metrics.gap;
+        const cellWidth = metrics.panelWidth;
+        const cellHeight = metrics.rowHeights[row] || metrics.panelHeight;
+        const boxWidth = Math.min(cellWidth, Math.round(cellHeight * sourceRatio));
+        const boxHeight = Math.min(cellHeight, Math.round(boxWidth / Math.max(sourceRatio, 0.001)));
         item.box = {
-          x: metrics.outer + col * (metrics.panelWidth + metrics.gap),
-          y: metrics.outer + metrics.rowHeights.slice(0, row).reduce((sum, height) => sum + height, 0) + row * metrics.gap,
-          width: metrics.panelWidth,
-          height: metrics.rowHeights[row] || metrics.panelHeight
+          x: cellX + (cellWidth - boxWidth) / 2,
+          y: cellY + (cellHeight - boxHeight) / 2,
+          width: boxWidth,
+          height: boxHeight
         };
       });
       lastCanvasWidth = metrics.targetWidth;
@@ -2105,14 +2126,53 @@
 
     function ensureManualBoxes() {
       const metrics = getLayoutMetrics();
-      if (lastCanvasWidth !== metrics.targetWidth || lastCanvasHeight !== metrics.targetHeight) {
-        resetGridLayout();
-        return metrics;
-      }
-
       const missingBox = panelFiles.some(item => !item.box);
-      if (missingBox) resetGridLayout();
+      if (missingBox) {
+        resetGridLayout();
+        return getLayoutMetrics();
+      }
       return metrics;
+    }
+
+    function panelLabelFont(labelSize) {
+      return `700 ${labelSize}px Arial, sans-serif`;
+    }
+
+    function normalizedLabelMetrics(targetCtx, label, labelSize) {
+      targetCtx.save();
+      targetCtx.font = panelLabelFont(labelSize);
+      targetCtx.textAlign = "left";
+      targetCtx.textBaseline = "alphabetic";
+      const measured = targetCtx.measureText(label);
+      const reference = targetCtx.measureText("H");
+      const ascent = measured.actualBoundingBoxAscent || labelSize * 0.72;
+      const descent = measured.actualBoundingBoxDescent || 0;
+      const left = measured.actualBoundingBoxLeft || 0;
+      const right = measured.actualBoundingBoxRight || measured.width;
+      const referenceHeight = Math.max(1, (reference.actualBoundingBoxAscent || labelSize * 0.72) + (reference.actualBoundingBoxDescent || 0));
+      const inkHeight = Math.max(1, ascent + descent);
+      const scale = referenceHeight / inkHeight;
+      targetCtx.restore();
+      return {
+        ascent,
+        left,
+        scale,
+        width: Math.max(1, (left + right) * scale),
+        height: referenceHeight
+      };
+    }
+
+    function drawNormalizedPanelLabel(targetCtx, label, x, y, labelSize, color = "#111827") {
+      const metrics = normalizedLabelMetrics(targetCtx, label, labelSize);
+      targetCtx.save();
+      targetCtx.translate(Math.round(x), Math.round(y));
+      targetCtx.scale(metrics.scale, metrics.scale);
+      targetCtx.font = panelLabelFont(labelSize);
+      targetCtx.textAlign = "left";
+      targetCtx.textBaseline = "alphabetic";
+      targetCtx.fillStyle = color;
+      targetCtx.fillText(label, metrics.left, metrics.ascent);
+      targetCtx.restore();
     }
 
     function drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, options = {}) {
@@ -2143,18 +2203,15 @@
 
       const label = labels[index];
       const labelSettings = ensurePanelLabelSettings(item);
-      targetCtx.font = `700 ${labelSize}px Arial, Microsoft YaHei, sans-serif`;
-      const metrics = targetCtx.measureText(label);
+      const metrics = normalizedLabelMetrics(targetCtx, label, labelSize);
       const labelWidth = metrics.width;
-      const labelHeight = labelSize;
+      const labelHeight = metrics.height;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
       const [lx, ly] = labelXY(labelSettings.position, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, {
         x: labelSettings.offsetX,
         y: labelSettings.offsetY
       });
-
-      targetCtx.fillStyle = "#111827";
-      targetCtx.fillText(label, lx, ly);
+      drawNormalizedPanelLabel(targetCtx, label, lx, ly, labelSize);
     }
 
     function textFontValue(textBox) {
@@ -2348,6 +2405,9 @@
     function renderFigure(targetCanvas = canvas, targetCtx = ctx, options = {}) {
       const count = panelFiles.length;
       const arrangeMode = controlValue("arrangeMode", "grid");
+      if (count && arrangeMode === "grid" && (!layoutBaseWidth || !layoutBaseHeight || layoutSignature !== currentLayoutSignature())) {
+        resetGridLayout();
+      }
       const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
       const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
 
@@ -2370,10 +2430,6 @@
       const labels = styledLabels(count);
       targetCtx.textAlign = "left";
       targetCtx.textBaseline = "top";
-
-      if (count && arrangeMode === "grid") {
-        resetGridLayout();
-      }
 
       panelFiles.forEach((item, index) => drawPanel(targetCtx, targetCanvas, item, index, labels, labelSize, {
         showSelection: options.showSelection !== false
@@ -3041,8 +3097,8 @@
     function renderExportCanvas() {
       const dpi = controlValue("exportDpi", "300");
       const scale = exportScaleForDpi(dpi);
+      if (panelFiles.length && controlValue("arrangeMode", "grid") === "grid" && (!layoutBaseWidth || !layoutBaseHeight || layoutSignature !== currentLayoutSignature())) resetGridLayout();
       const metrics = controlValue("arrangeMode", "grid") === "manual" ? ensureManualBoxes() : getLayoutMetrics();
-      if (panelFiles.length && controlValue("arrangeMode", "grid") === "grid") resetGridLayout();
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = Math.max(1, Math.round(metrics.targetWidth * scale));
       exportCanvas.height = Math.max(1, Math.round(metrics.targetHeight * scale));
@@ -3259,14 +3315,18 @@
 
     function svgLabel(label, item, box, labelSize) {
       const labelSettings = ensurePanelLabelSettings(item);
-      const labelWidth = label.length * labelSize * 0.62;
-      const labelHeight = labelSize;
+      const metrics = normalizedLabelMetrics(ctx, label, labelSize);
+      const labelWidth = metrics.width;
+      const labelHeight = metrics.height;
       const margin = Math.max(16, Math.round(labelSize * 0.3));
       const [x, y] = labelXY(labelSettings.position, box.x, box.y, box.width, box.height, labelWidth, labelHeight, margin, {
         x: labelSettings.offsetX,
         y: labelSettings.offsetY
       });
-      return `<text x="${x}" y="${y}" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${labelSize}" font-weight="700" fill="#111827">${xmlEscape(label)}</text>`;
+      const fontSize = labelSize * metrics.scale;
+      const textX = Math.round((x + metrics.left * metrics.scale) * 100) / 100;
+      const textY = Math.round((y + metrics.ascent * metrics.scale) * 100) / 100;
+      return `<text x="${textX}" y="${textY}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="700" dominant-baseline="alphabetic" fill="#111827">${xmlEscape(label)}</text>`;
     }
 
     function svgPanelBorder(box) {
@@ -3319,8 +3379,8 @@
 
     async function exportSvgBlob() {
       const arrangeMode = controlValue("arrangeMode", "grid");
+      if (panelFiles.length && arrangeMode === "grid" && (!layoutBaseWidth || !layoutBaseHeight || layoutSignature !== currentLayoutSignature())) resetGridLayout();
       const metrics = arrangeMode === "manual" ? ensureManualBoxes() : getLayoutMetrics();
-      if (panelFiles.length && arrangeMode === "grid") resetGridLayout();
       const labels = styledLabels(panelFiles.length);
       const labelSize = Number(controlValue("previewLabelSize", "64")) || 64;
       const imageUrls = await Promise.all(panelFiles.map(imageFileDataUrl));
@@ -3470,7 +3530,7 @@
     }
 
     ids.forEach(id => document.getElementById(id)?.addEventListener("input", buildCommand));
-    ["canvasWidth", "canvasHeight", "layoutHeightMode", "previewLayout", "previewLabelSize", "labelStyle", "panelBorderEnabled", "panelBorderColor", "panelBorderWidth", "panelBorderStyle", "gap", "imageFitMode", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
+    ["canvasWidth", "canvasHeight", "previewLayout", "previewLabelSize", "labelStyle", "panelBorderEnabled", "panelBorderColor", "panelBorderWidth", "panelBorderStyle", "gap", "imageFitMode", "arrangeMode", "exportDpi", "exportFormat"].forEach(id => {
       document.getElementById(id)?.addEventListener("input", renderCanvas);
     });
     ["previewLabelPosition", "labelOffsetX", "labelOffsetY"].forEach(id => {
@@ -3557,8 +3617,8 @@
     });
     on("fullscreenEditBtn", "click", openFullscreenEditor);
     on("svgInnerEditBtn", "click", openSvgEditor);
-    on("scaleUpBtn", "click", () => scaleSelected(1.4));
-    on("scaleDownBtn", "click", () => scaleSelected(0.9));
+    on("scaleUpBtn", "click", () => scaleSelected(1.08));
+    on("scaleDownBtn", "click", () => scaleSelected(0.92));
     on("bringForwardBtn", "click", () => moveLayer(1));
     on("sendBackwardBtn", "click", () => moveLayer(-1));
     on("closePreviewBtn", "click", closePreviewModal);
@@ -3566,8 +3626,8 @@
     on("closeFullscreenBtn", "click", closeFullscreenEditor);
     on("closeSvgEditorBtn", "click", closeSvgEditor);
     on("fullscreenCancelBtn", "click", closeFullscreenEditor);
-    on("fullscreenScaleUpBtn", "click", () => scaleSelectedInFullscreen(1.25));
-    on("fullscreenScaleDownBtn", "click", () => scaleSelectedInFullscreen(0.85));
+    on("fullscreenScaleUpBtn", "click", () => scaleSelectedInFullscreen(1.08));
+    on("fullscreenScaleDownBtn", "click", () => scaleSelectedInFullscreen(0.92));
     on("fullscreenZoomInBtn", "click", () => zoomFullscreen(1.25));
     on("fullscreenZoomOutBtn", "click", () => zoomFullscreen(0.8));
     on("applyCropBtn", "click", applyCrop);
