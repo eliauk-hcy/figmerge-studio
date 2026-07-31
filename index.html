@@ -2079,9 +2079,7 @@
         return Math.max(80, Math.round(panelWidth * rowRatio));
       });
       const panelHeight = compact ? rowHeights[0] || fixedPanelHeight : fixedPanelHeight;
-      const targetHeight = compact
-        ? Math.max(outer * 2 + rowHeights.reduce((sum, height) => sum + height, 0) + gap * Math.max(0, grid.rows - 1), 1)
-        : requestedHeight;
+      const targetHeight = requestedHeight;
       return { targetWidth, targetHeight, layoutWidth, layoutHeight, grid, gap, outer, panelWidth, panelHeight, rowHeights };
     }
 
